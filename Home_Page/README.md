@@ -1,27 +1,31 @@
 # 海鮮餃子 北京 移行用サイト
 
-Jimdo 上の現行サイト `https://www.gyozapekin.com/` をベースに、GitHub Pages へ移行するための静的サイト初期版です。
+Jimdo 上の現行サイトをベースに、GitHub Pages へ移行するための静的サイトです。
 
 ## 現在の状態
 
-- 主要ページを静的 HTML として再構築
-- 現サイトの公開テキストをもとに導線を整理
-- 画像資産の一括取得は Cloudflare による制限のため未完了
+- 現サイトに寄せた配色、ヘッダー、背景、写真、ギャラリー画像を反映
+- `Home_Page` ディレクトリを GitHub Pages へ配備する構成
+- 旧URL互換として `shipping.html` と `gyoza.html` は新URLへリダイレクト
 
-## 次にやること
+## 主要ページ
 
-- 画像・PDF・ブログ・ギャラリーの回収
-- 営業時間など表記揺れの確認
-- GitHub リポジトリ化と GitHub Pages 仮公開
-- ドメイン切替前の最終レビュー
+- `index.html`
+- `order.html`
+- `menu.html`
+- `about.html`
+- `howto.html`
+- `blog.html`
+- `gallery.html`
+- `contact.html`
+- `shift.html`
 
 ## GitHub Pages
 
-リポジトリ直下の `.github/workflows/deploy-home-page.yml` で、`Home_Page` ディレクトリを GitHub Pages にデプロイする想定です。
+リポジトリ直下の `.github/workflows/deploy-home-page.yml` で、`Home_Page` ディレクトリを GitHub Pages にデプロイします。
+リポジトリ設定の `Settings > Pages` で `Source: GitHub Actions` が必要です。
 
 ## ローカル確認
-
-`Home_Page` ディレクトリで次を実行すると、ローカルで確認できます。
 
 ```powershell
 python -m http.server 8000
