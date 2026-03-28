@@ -1,141 +1,142 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>海鮮餃子 北京 | 枚方にうまい店あり</title>
-    <meta name="description" content="大阪府枚方市宮之阪の中華料理店 海鮮餃子 北京。海鮮餃子や一品料理、全国発送、店舗情報をご案内します。">
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <header class="site-header">
-      <div class="header-inner">
-        <a class="brand" href="index.html">
-          <span class="brand-mark">Kaisen Gyoza Pekin</span>
-          <span class="brand-name">海鮮餃子 北京</span>
-        </a>
-        <nav class="site-nav" aria-label="主要メニュー">
-          <a data-nav href="index.html">ホーム</a>
-          <a data-nav href="menu.html">メニュー</a>
-          <a data-nav href="about.html">店舗紹介</a>
-          <a data-nav href="shipping.html">全国発送</a>
-          <a data-nav href="gyoza.html">餃子の焼き方</a>
-          <a data-nav href="contact.html">お問合わせ</a>
-        </nav>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海鮮餃子 北京 - gyoza-pekin ページ！</title>
+  <meta name="description" content="海鮮餃子の北京は大阪府枚方市宮之阪にある中華料理店です。新鮮な肉と減農薬野菜を使った手作りの海鮮餃子をぜひお楽しみください。">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="site-wrapper">
+  <header class="site-header">
+    <a href="index.html">
+      <img src="images/logo_banner.png" alt="海鮮餃子 北京" class="logo">
+    </a>
+  </header>
+
+  <nav class="site-nav">
+    <ul>
+      <li><a href="index.html" class="active">ホーム</a></li>
+      <li><a href="order.html">ネットショップ・ECサイト</a></li>
+      <li><a href="menu.html">メニュー</a></li>
+      <li><a href="about.html">店舗紹介</a></li>
+      <li><a href="howto.html">餃子の焼き方</a></li>
+      <li><a href="blog.html">ブログ</a></li>
+      <li><a href="gallery.html">ギャラリー</a></li>
+      <li><a href="contact.html">お問い合わせ</a></li>
+      <li><a href="shift.html" style="color:#c0392b; font-weight:bold;">営業案内</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="slideshow">
+      <div class="slide active"><img src="images/gallery/2024Q2/20240401.jpg" alt="海鮮餃子 北京"></div>
+      <div class="slide"><img src="images/gallery/2024Q3/20240701.jpg" alt="海鮮餃子 北京"></div>
+      <div class="slide"><img src="images/gallery/2025Q1/20250115.jpg" alt="海鮮餃子 北京"></div>
+      <div class="slide"><img src="images/gallery/2025Q2/20250401.jpg" alt="海鮮餃子 北京"></div>
+      <div class="slide"><img src="images/gallery/2025Q4/20250901.jpg" alt="海鮮餃子 北京"></div>
+      <div class="slide"><img src="images/gallery/2026Q1/20260120.jpg" alt="海鮮餃子 北京"></div>
+    </div>
+    <script>
+      (function() {
+        var slides = document.querySelectorAll(".slide");
+        var current = 0;
+        setInterval(function() {
+          slides[current].classList.remove("active");
+          current = (current + 1) % slides.length;
+          slides[current].classList.add("active");
+        }, 4000);
+      })();
+    </script>
+
+    <p style="margin: 10px 0 20px;">
+      <a href="order.html" class="btn-order">全国発送の海鮮餃子はこちらからご注文いただけます。</a>
+    </p>
+
+    <section class="section">
+      <h2>お知らせ</h2>
+      <ul class="news-list">
+        <li><a href="blog.html">お休みのお知らせ 10月</a></li>
+        <li><a href="blog.html">しごとぎや「たまゆら」さんの YouTube で紹介いただきました</a></li>
+        <li><a href="blog.html">なるみ・岡村の過ぎるTVで紹介いただきました</a></li>
+        <li><a href="blog.html">北京の新型コロナウイルス対策について</a></li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>いらっしゃいませ</h2>
+      <p>
+        海鮮餃子の北京は、大阪府枚方市宮之阪にある中華料理店です。<br>
+        新鮮な豚肉と減農薬野菜を使った手作りの海鮮餃子を看板商品に、<br>
+        あげそば、酢豚、唐揚げ、天ぷら、焼飯など豊富な一品料理をご用意しています。<br>
+        餃子はもちろん、餃子以外の一品料理もおいしいものづくしです。<br>
+        お腹をすかせて、ぜひ一度お越しください。
+      </p>
+
+      <div class="photo-grid">
+        <img src="images/food_photo1.jpg" alt="料理写真">
+        <img src="images/interior_photo1.jpg" alt="店内写真">
       </div>
-    </header>
+    </section>
 
-    <main>
-      <section class="hero">
-        <div class="section-inner hero-grid">
-          <div class="hero-copy">
-            <p class="eyebrow">Hirakata / Handmade Chinese Dining</p>
-            <h1>枚方にうまい店あり。</h1>
-            <p>
-              海鮮餃子の北京は、大阪府枚方市宮之阪にある中華料理店です。
-              新鮮な豚肉と減農薬野菜を使った手作りの海鮮餃子をはじめ、
-              あげそば、酢豚、唐揚げ、天ぷら、焼飯など多数の一品料理をご用意しています。
-            </p>
-            <div class="hero-actions">
-              <a class="button primary" href="shipping.html">お取り寄せ餃子を見る</a>
-              <a class="button secondary" href="menu.html">店舗メニューを見る</a>
-            </div>
-          </div>
-          <div class="hero-panel">
-            <div class="hero-photo" role="img" aria-label="海鮮餃子 北京のイメージ"></div>
-            <div class="hero-badges">
-              <div class="card">
-                <strong>営業時間</strong>
-                <p>11:30-22:00<br>ラストオーダー 21:45<br>定休日 火曜日</p>
-              </div>
-              <div class="card">
-                <strong>アクセス</strong>
-                <p>京阪電車「宮之阪駅」徒歩約2分<br>京阪電車「枚方市駅」徒歩約10分</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+    <section class="section">
+      <h2>店舗情報</h2>
+      <table class="store-info-table" style="margin-top:16px;">
+        <tr>
+          <th>店名</th>
+          <td>海鮮餃子 北京</td>
+        </tr>
+        <tr>
+          <th>住所</th>
+          <td>〒573-0022 大阪府枚方市宮之阪1-19-2</td>
+        </tr>
+        <tr>
+          <th>電話</th>
+          <td><a href="tel:0728490433">072-849-0433</a></td>
+        </tr>
+        <tr>
+          <th>FAX</th>
+          <td>072-849-0606</td>
+        </tr>
+        <tr>
+          <th>営業時間</th>
+          <td>11:30-22:00（ラストオーダー 21:45）</td>
+        </tr>
+        <tr>
+          <th>定休日</th>
+          <td>火曜日</td>
+        </tr>
+        <tr>
+          <th>アクセス</th>
+          <td>京阪電車「宮之阪駅」徒歩約2分<br>京阪電車「枚方市駅」徒歩約10分</td>
+        </tr>
+        <tr>
+          <th>駐車場</th>
+          <td>4台。満車の場合は隣のコインパーキングをご利用ください。</td>
+        </tr>
+      </table>
 
-      <section class="section">
-        <div class="section-inner two-column">
-          <div>
-            <h2 class="section-title">お知らせ</h2>
-            <ul class="notice-list">
-              <li>お休みのお知らせ 10月</li>
-              <li>しごとぎや『たまゆら』さんのYoutubeで紹介いただきました</li>
-              <li>なるみ・岡村の過ぎるTVで紹介頂きました</li>
-              <li>北京の新型コロナウイルス対策について</li>
-            </ul>
-          </div>
-          <div class="card">
-            <span class="kicker">いらっしゃいませ</span>
-            <h2>手作りの海鮮餃子と、中華の定番をたっぷり。</h2>
-            <p>
-              餃子はもちろん、餃子以外の一品料理もおいしいものづくしです。
-              お腹をすかせてお越しいただけるよう、定食、麺類、ご飯類まで幅広くご用意しています。
-            </p>
-            <div class="stacked-links">
-              <a class="button secondary" href="about.html">北京のこだわり</a>
-              <a class="button secondary" href="contact.html">店舗情報・連絡先</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="section-inner two-column">
-          <div class="card">
-            <span class="kicker">店舗情報</span>
-            <h2>海鮮餃子 北京</h2>
-            <ul class="info-list">
-              <li>住所: 〒573-0022 大阪府枚方市宮之阪1-19-2</li>
-              <li>営業時間: 11:30-22:00（ラストオーダー 21:45）</li>
-              <li>定休日: 火曜日</li>
-              <li>駐車場: 4台。満車の場合は隣のコインパーキングをご利用ください。</li>
-              <li>TEL: 072-849-0433 / FAX: 072-849-0606</li>
-            </ul>
-          </div>
-          <div class="card">
-            <span class="kicker">全国発送承ります</span>
-            <h2>ご自宅や贈り物にも。</h2>
-            <p>
-              ECサイトからのご注文に対応しています。WEB掲載外の商品は、お電話またはFAXでのご注文も可能です。
-              ご注文を受けてから7日以内の発送を予定しています。
-            </p>
-            <div class="cta-row">
-              <a class="button primary" href="https://www.gyozapekin.com/%E3%83%8D%E3%83%83%E3%83%88%E3%82%B7%E3%83%A7%E3%83%83%E3%83%97-ec%E3%82%B5%E3%82%A4%E3%83%88/" target="_blank" rel="noreferrer">ECサイト案内</a>
-              <a class="button secondary" href="gyoza.html">焼き方を見る</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="section-inner card">
-          <span class="kicker">移行メモ</span>
-          <h2>この複製サイトについて</h2>
-          <p>
-            現在の Jimdo サイトのテキスト構成と主要導線をもとに、GitHub Pages で運用できる形へ再構築した初期版です。
-            画像とブログ・ギャラリーの完全移行は次段階で追加します。
-          </p>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="footer-inner">
-        <div>
-          <strong>海鮮餃子 北京</strong>
-          <p class="fineprint">大阪府枚方市宮之阪1-19-2 / Tel 072-849-0433 / Fax 072-849-0606</p>
-          <p class="fineprint">Copyright (c) 2009, Kaisen Gyoza PEKIN</p>
-        </div>
-        <div class="footer-links">
-          <a href="privacy.html">プライバシーポリシー</a>
-          <a href="sitemap.html">サイトマップ</a>
-        </div>
+      <div class="map-wrap">
+        <iframe
+          src="https://maps.google.com/maps?q=%E5%A4%A7%E9%98%AA%E5%BA%9C%E6%9E%9A%E6%96%B9%E5%B8%82%E5%AE%AE%E4%B9%8B%E9%98%AA1-19-2&output=embed&hl=ja"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="海鮮餃子 北京 地図"></iframe>
       </div>
-    </footer>
-    <script src="main.js"></script>
-  </body>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-links">
+      <a href="index.html">ホーム</a>
+      <a href="menu.html">メニュー</a>
+      <a href="about.html">店舗紹介</a>
+      <a href="contact.html">お問い合わせ</a>
+    </div>
+    <p class="copyright">&copy; 海鮮餃子 北京 All Rights Reserved.</p>
+  </footer>
+</div>
+</body>
 </html>
