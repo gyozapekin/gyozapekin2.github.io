@@ -3,7 +3,7 @@ name: Deploy Home Page
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - "Home_Page/**"
       - ".github/workflows/deploy-home-page.yml"
