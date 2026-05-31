@@ -481,12 +481,26 @@ const DOW_CLS2=['sun','mon','tue','wed','thu','fri','sat'];
 
 /* ── DEADLINE CHECK ── */
 function updateDeadlineUI(){
-  const deadline=new Date(now.getFullYear(),now.getMonth(),20,23,59,59);
-  const closed=now>deadline;
+  /* デフォルト: リクエスト月の「前月20日」が締切 */
+  let deadline=new Date(reqY,reqM-1,20,23,59,59);
+  /* 管理者が pekin_settings.deadlines[YYYY-MM] でオーバーライド可能 */
+  try{
+    const s=JSON.parse(localStorage.getItem('pekin_settings')||'{}');
+    const ymKey=`${reqY}-${String(reqM+1).padStart(2,'0')}`;
+    if(s.deadlines&&s.deadlines[ymKey]){
+      /* YYYY-MM-DD形式の文字列を期待 */
+      const ov=new Date(s.deadlines[ymKey]+'T23:59:59');
+      if(!isNaN(ov.getTime()))deadline=ov;
+    }
+  }catch(e){}
+  const _now=new Date();
+  const closed=_now>deadline;
   document.getElementById('reqStatusBadge').textContent=closed?'受付終了':'受付中';
   document.getElementById('reqStatusBadge').className='status-badge '+(closed?'status-closed':'status-open');
   document.getElementById('submitBtn').disabled=closed;
-  document.getElementById('reqDeadline').textContent=`${now.getMonth()+1}月20日`;
+  const dy=deadline.getFullYear(),dm=deadline.getMonth()+1,dd=deadline.getDate();
+  const yPrefix=dy!==reqY?`${dy}年`:'';
+  document.getElementById('reqDeadline').textContent=`${yPrefix}${dm}月${dd}日`;
 }
 
 /* ── RENDER REQUEST LIST ──

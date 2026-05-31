@@ -484,6 +484,13 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
       <div id="masterPwStatus" style="font-size:.8em;margin-top:10px;color:#64748b"></div>
     </div>
   </div>
+
+  <h3 style="font-size:.95em;margin:18px 0 8px;color:#475569;font-weight:700">📅 シフト希望締切設定</h3>
+  <p style="font-size:.78em;color:#64748b;margin:0 0 8px">
+    各月のシフト希望提出締切を管理します。デフォルトは「前月の20日」です。<br>
+    特定月のみ締切を変更したい場合は日付を入力して「保存」、戻すには「リセット」。
+  </p>
+  <div id="deadlineWrap"></div>
 </div>
 
 <!-- PANEL: SHIFT TEMPLATE -->
@@ -726,7 +733,7 @@ function _reRenderAllPanels(){
     if(id==='overview'&&typeof renderOverview==='function')renderOverview();
     else if(id==='avail'&&typeof renderAvailPanel==='function')renderAvailPanel();
     else if(id==='staff'&&typeof renderStaffPanel==='function')renderStaffPanel();
-    else if(id==='settings'&&typeof renderSettingsPanel==='function'){renderSettingsPanel();renderMasterPwStatus();}
+    else if(id==='settings'&&typeof renderSettingsPanel==='function'){renderSettingsPanel();if(typeof renderDeadlinePanel==='function')renderDeadlinePanel();renderMasterPwStatus();}
   }catch(e){console.warn('reRender:',e);}
 }
 
@@ -1856,6 +1863,73 @@ function deleteStaffAvail(staffId, staffName){
 const DOW_NAMES=['日','月','火','水','木','金','土'];
 let closedDaySelection=[];
 
+
+/* ============ シフト希望締切設定（月別） ============
+   pekin_settings.deadlines = {"YYYY-MM": "YYYY-MM-DD", ...}
+   未設定の月は staff.html 側で「前月20日」がデフォルト適用される */
+function _getDefaultDeadline(y,m){
+  /* m は 0-indexed のリクエスト月。デフォルト=前月20日 */
+  const d=new Date(y,m-1,20);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function renderDeadlinePanel(){
+  const wrap=document.getElementById('deadlineWrap');
+  if(!wrap)return;
+  const s=getSettings();
+  const overrides=s.deadlines||{};
+  /* 表示対象: 現在月から12ヶ月先まで */
+  const now=new Date();
+  let html='<table style="width:100%;border-collapse:collapse;font-size:.84em"><thead><tr style="background:#f8fafc">'
+    +'<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #cbd5e1">対象月</th>'
+    +'<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #cbd5e1">締切日</th>'
+    +'<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #cbd5e1">状態</th>'
+    +'<th style="padding:6px 8px;text-align:center;border-bottom:1px solid #cbd5e1">操作</th>'
+    +'</tr></thead><tbody>';
+  for(let i=0;i<=12;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+    const y=d.getFullYear(),m=d.getMonth();
+    const ym=`${y}-${String(m+1).padStart(2,'0')}`;
+    const def=_getDefaultDeadline(y,m);
+    const cur=overrides[ym]||def;
+    const isOverride=!!overrides[ym];
+    const past=new Date(cur+'T23:59:59')<now;
+    html+=`<tr style="border-bottom:0.5px solid #e2e8f0">
+      <td style="padding:6px 8px;font-weight:600">${y}年${m+1}月</td>
+      <td style="padding:6px 8px">
+        <input type="date" value="${cur}" id="dl_${ym}" style="font-size:.9em;padding:3px 6px;border:1px solid #cbd5e1;border-radius:4px">
+        ${isOverride?'<span style="font-size:.7em;color:#0369a1;margin-left:4px">⚙ 上書き中</span>':'<span style="font-size:.7em;color:#94a3b8;margin-left:4px">デフォルト（前月20日）</span>'}
+      </td>
+      <td style="padding:6px 8px;font-size:.85em">${past?'<span style="color:#991b1b;font-weight:600">受付終了</span>':'<span style="color:#065f46;font-weight:600">受付中</span>'}</td>
+      <td style="padding:6px 8px;text-align:center">
+        <button class="cbtn cbtn-blue" style="padding:2px 10px;font-size:.78em" onclick="saveDeadline('${ym}')">保存</button>
+        ${isOverride?`<button class="cbtn cbtn-outline" style="padding:2px 8px;font-size:.78em;margin-left:4px" onclick="resetDeadline('${ym}')">リセット</button>`:''}
+      </td>
+    </tr>`;
+  }
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+function saveDeadline(ym){
+  const inp=document.getElementById('dl_'+ym);
+  if(!inp||!inp.value){alert('日付を入力してください');return;}
+  const s=getSettings();
+  if(!s.deadlines)s.deadlines={};
+  s.deadlines[ym]=inp.value;
+  saveSettings(s);
+  renderDeadlinePanel();
+  showUpdateToast(`✔ ${ym}の締切を ${inp.value} に設定しました`);
+}
+function resetDeadline(ym){
+  if(!confirm(`${ym} の締切をデフォルト（前月20日）に戻しますか？`))return;
+  const s=getSettings();
+  if(s.deadlines&&s.deadlines[ym]){
+    delete s.deadlines[ym];
+    saveSettings(s);
+  }
+  renderDeadlinePanel();
+  showUpdateToast(`↩ ${ym}をデフォルト締切に戻しました`);
+}
+
 function renderSettingsPanel(){
   const s=getSettings();
   closedDaySelection=[...(s.defaultClosedDays||[2,3])];
@@ -1979,7 +2053,7 @@ function deleteOpenException(k){
   const s=getSettings();
   delete s.specialDates[k];
   saveSettings(s);
-  renderSettingsPanel();
+  renderSettingsPanel();if(typeof renderDeadlinePanel==='function')renderDeadlinePanel();
   loadShift();render();
 }
 
@@ -2231,7 +2305,7 @@ function switchTab(name){
   if(name==='overview')renderOverview();
   if(name==='avail')renderAvailPanel();
   if(name==='staff')renderStaffPanel();
-  if(name==='settings'){renderSettingsPanel();renderMasterPwStatus();}
+  if(name==='settings'){renderSettingsPanel();if(typeof renderDeadlinePanel==='function')renderDeadlinePanel();renderMasterPwStatus();}
   if(name==='template')renderTemplatePanel();
   if(name==='stats')renderStatsPanel();
 }
@@ -2483,14 +2557,14 @@ function toggleQuickClose(y,m,d){
       if(confirm(`${y}年${m+1}月${d}日の「営業日設定」を解除し、定休日に戻しますか？`)){
         delete s.specialDates[k];
         saveSettings(s);loadShift();render();
-        if(document.getElementById('panel-settings').classList.contains('active'))renderSettingsPanel();
+        if(document.getElementById('panel-settings').classList.contains('active'))renderSettingsPanel();if(typeof renderDeadlinePanel==='function')renderDeadlinePanel();
       }
     }else{
       /* 特別休日 → 解除 */
       if(confirm(`${y}年${m+1}月${d}日の休業設定を解除しますか？`)){
         delete s.specialDates[k];
         saveSettings(s);loadShift();render();
-        if(document.getElementById('panel-settings').classList.contains('active'))renderSettingsPanel();
+        if(document.getElementById('panel-settings').classList.contains('active'))renderSettingsPanel();if(typeof renderDeadlinePanel==='function')renderDeadlinePanel();
       }
     }
   }else{
@@ -2502,7 +2576,7 @@ function toggleQuickClose(y,m,d){
         if(!s.specialDates)s.specialDates={};
         s.specialDates[k]={type:'open',label:'営業'};
         saveSettings(s);loadShift();render();
-        if(document.getElementById('panel-settings').classList.contains('active'))renderSettingsPanel();
+        if(document.getElementById('panel-settings').classList.contains('active'))renderSettingsPanel();if(typeof renderDeadlinePanel==='function')renderDeadlinePanel();
       }
     }else{
       /* 通常営業日 → 休業設定モーダルをその日付で開く */
