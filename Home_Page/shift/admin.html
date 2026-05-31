@@ -140,6 +140,25 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
 .filter-btn.filter-on-off{background:#fee2e2;color:#991b1b;border-color:#991b1b}
 .filter-btn.filter-disabled{background:transparent;color:#94a3b8;border-color:#cbd5e1;border-style:dashed;text-decoration:line-through}
 .archived-badge{font-size:.6em;background:#f1f5f9;color:#64748b;padding:1px 5px;border-radius:8px;margin-left:4px;font-weight:500}
+.stats-table{width:100%;border-collapse:collapse;font-size:.86em;margin-bottom:16px;background:#fff}
+.stats-table th{background:#f1f5f9;padding:8px 10px;text-align:center;border-bottom:1.5px solid #cbd5e1;font-weight:700;color:#475569;font-size:.82em;white-space:nowrap}
+.stats-table td{padding:8px 10px;border-bottom:0.5px solid #e2e8f0;text-align:center}
+.stats-table td.tname{text-align:left;font-weight:600;color:#1e293b}
+.stats-table tr:hover{background:#f8fafc}
+.stats-bar{display:inline-block;height:8px;border-radius:4px;background:linear-gradient(90deg,#3b82f6 0%,#3b82f6 var(--p,0%),#e2e8f0 var(--p,0%),#e2e8f0 100%);min-width:60px;vertical-align:middle;margin-right:6px}
+.stats-bar.lunch{background:linear-gradient(90deg,#0ea5e9 0%,#0ea5e9 var(--p,0%),#e2e8f0 var(--p,0%),#e2e8f0 100%)}
+.stats-bar.dinner{background:linear-gradient(90deg,#f59e0b 0%,#f59e0b var(--p,0%),#e2e8f0 var(--p,0%),#e2e8f0 100%)}
+.stats-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.stats-card{background:#f8fafc;padding:10px 12px;border-radius:8px;border:1px solid #e2e8f0}
+.stats-card-label{font-size:.72em;color:#64748b;margin-bottom:2px;font-weight:600}
+.stats-card-val{font-size:1.4em;font-weight:700;color:#1e293b}
+.stats-card-sub{font-size:.7em;color:#94a3b8;margin-top:2px}
+.streak-badge{padding:2px 8px;border-radius:10px;font-weight:700;font-size:.85em;display:inline-block}
+.streak-low{background:#dcfce7;color:#166534}
+.streak-warn{background:#fef9c3;color:#854d0e}
+.streak-danger{background:#fee2e2;color:#991b1b}
+.stats-empty{color:#94a3b8;text-align:center;padding:24px;font-size:.9em}
+
 .ov-tab{padding:5px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#64748b;font-size:.82em;font-weight:600;cursor:pointer}
 .ov-tab.ov-tab-active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
 .avail-suggest-label{font-size:.58em;color:#94a3b8;letter-spacing:.04em;width:100%;
@@ -293,6 +312,7 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
   <button class="tab" onclick="switchTab('staff')">👥 スタッフ管理</button>
   <button class="tab" onclick="switchTab('settings')">⚙ 設定</button>
   <button class="tab" onclick="switchTab('template')">📋 テンプレート</button>
+  <button class="tab" onclick="switchTab('stats')">📈 統計</button>
 </div>
 
 <!-- PANEL: SHIFT MANAGEMENT -->
@@ -477,6 +497,22 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
     「今月に反映」ボタンで <strong style="color:#374151">シフト管理</strong> タブにテンプレートが下書きとして反映されます。
   </p>
   <div id="templatePanelBody"></div>
+</div>
+
+<div class="panel" id="panel-stats">
+  <div class="cal-controls no-print" style="margin-bottom:8px;flex-wrap:wrap;align-items:center;gap:8px">
+    <button class="cbtn cbtn-outline" onclick="changeMonth(-1)">◀</button>
+    <span id="statsMonthLabel" style="font-weight:700;color:#374151;font-size:1.05em">YYYY年 M月</span>
+    <button class="cbtn cbtn-outline" onclick="changeMonth(1)">▶</button>
+    <span style="margin-left:auto;font-size:.85em;color:#64748b">集計対象:</span>
+    <button id="statsSrcPub" class="cbtn cbtn-blue" onclick="setStatsSource('published')">✓ 公開済み</button>
+    <button id="statsSrcDraft" class="cbtn cbtn-outline" onclick="setStatsSource('draft')">下書き</button>
+    <button class="cbtn cbtn-outline" onclick="renderStatsPanel()" title="再計算">⟳ 更新</button>
+  </div>
+  <p style="font-size:.78em;color:#64748b;margin:0 0 12px;padding:0 2px">
+    1コマ = 4時間で計算します。連勤判定は営業日のみ（定休日はスキップ）。
+  </p>
+  <div id="statsBody"></div>
 </div>
 
 <!-- MODAL: Edit Shift -->
@@ -2185,7 +2221,7 @@ function resetToDefault(){
   shiftData=applyTemplate(Y,M);_pushShiftHistory();saveShift();render();
 }
 
-const TAB_NAMES=['shift','overview','avail','staff','settings','template'];
+const TAB_NAMES=['shift','overview','avail','staff','settings','template','stats'];
 function switchTab(name){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',TAB_NAMES[i]===name));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -2196,6 +2232,7 @@ function switchTab(name){
   if(name==='staff')renderStaffPanel();
   if(name==='settings'){renderSettingsPanel();renderMasterPwStatus();}
   if(name==='template')renderTemplatePanel();
+  if(name==='stats')renderStatsPanel();
 }
 
 /* ════════════════════════════════════════
@@ -2925,6 +2962,174 @@ window.addEventListener('beforeunload',()=>{
     }catch(e){}
   }
 });
+
+
+/* ════════════════════════════════════════
+   STATS PANEL — 出勤時間・割合・連勤
+   1コマ=4時間、連勤判定は営業日のみ
+════════════════════════════════════════ */
+let _statsSource='published'; /* 'published' | 'draft' */
+function setStatsSource(s){
+  _statsSource=s;
+  document.getElementById('statsSrcPub').className=s==='published'?'cbtn cbtn-blue':'cbtn cbtn-outline';
+  document.getElementById('statsSrcDraft').className=s==='draft'?'cbtn cbtn-blue':'cbtn cbtn-outline';
+  if(s==='published')document.getElementById('statsSrcPub').textContent='✓ 公開済み';
+  else document.getElementById('statsSrcPub').textContent='公開済み';
+  if(s==='draft')document.getElementById('statsSrcDraft').textContent='✓ 下書き';
+  else document.getElementById('statsSrcDraft').textContent='下書き';
+  renderStatsPanel();
+}
+
+function _calcStats(y,m,shiftData){
+  const days=new Date(y,m+1,0).getDate();
+  const stats={};/* name -> {lunch, dinner, days:Set<int>, slots:[{d,slot}]} */
+  let businessDays=0,lunchSlotTotal=0,dinnerSlotTotal=0;
+  const businessDayList=[];
+  for(let d=1;d<=days;d++){
+    if(isClosedDay(y,m,d))continue;
+    businessDays++;
+    businessDayList.push(d);
+    const k=dKey(y,m,d);
+    const e=shiftData[k];
+    if(!e)continue;
+    const ln=(e.lunch&&e.lunch.names||[]).filter(n=>n);
+    const dn=(e.dinner&&e.dinner.names||[]).filter(n=>n);
+    lunchSlotTotal+=ln.length;
+    dinnerSlotTotal+=dn.length;
+    ln.forEach(n=>{
+      if(!stats[n])stats[n]={lunch:0,dinner:0,days:new Set(),slots:[]};
+      stats[n].lunch++;
+      stats[n].days.add(d);
+      stats[n].slots.push({d,slot:'lunch'});
+    });
+    dn.forEach(n=>{
+      if(!stats[n])stats[n]={lunch:0,dinner:0,days:new Set(),slots:[]};
+      stats[n].dinner++;
+      stats[n].days.add(d);
+      stats[n].slots.push({d,slot:'dinner'});
+    });
+  }
+  /* 連勤判定: 営業日リスト上で連続位置を見る */
+  for(const[name,st]of Object.entries(stats)){
+    const workedDays=Array.from(st.days).sort((a,b)=>a-b);
+    const positions=workedDays.map(d=>businessDayList.indexOf(d)).filter(p=>p>=0);
+    let maxStreak=0,curStart=0,curLen=0;
+    let streakStartDay=null,streakEndDay=null;
+    for(let i=0;i<positions.length;i++){
+      if(i===0||positions[i]===positions[i-1]+1){
+        if(curLen===0)curStart=i;
+        curLen++;
+      }else{
+        if(curLen>maxStreak){
+          maxStreak=curLen;
+          streakStartDay=workedDays[curStart];
+          streakEndDay=workedDays[i-1];
+        }
+        curStart=i;curLen=1;
+      }
+    }
+    if(curLen>maxStreak){
+      maxStreak=curLen;
+      streakStartDay=workedDays[curStart];
+      streakEndDay=workedDays[positions.length-1>=0?workedDays.length-1:0];
+    }
+    st.maxStreak=maxStreak;
+    st.streakStartDay=streakStartDay;
+    st.streakEndDay=streakEndDay;
+  }
+  return {stats,businessDays,lunchSlotTotal,dinnerSlotTotal};
+}
+
+function renderStatsPanel(){
+  const lbl=document.getElementById('statsMonthLabel');
+  if(lbl)lbl.textContent=`${Y}年 ${M+1}月`;
+  const body=document.getElementById('statsBody');
+  if(!body)return;
+  /* データ取得 */
+  let shiftData={};
+  if(_statsSource==='published'){
+    const raw=localStorage.getItem(getPublishKey());
+    if(raw==='1'){shiftData=JSON.parse(localStorage.getItem(shiftKey())||'{}');}
+    else if(raw){try{shiftData=JSON.parse(raw);}catch(e){shiftData={};}}
+    else shiftData=null;
+  }else{
+    shiftData=JSON.parse(localStorage.getItem(shiftKey())||'{}');
+  }
+  if(shiftData===null){
+    body.innerHTML='<div class="stats-empty">この月はまだ公開されていません。<br>下書きで集計するには右上の「下書き」を選択してください。</div>';
+    return;
+  }
+  if(Object.keys(shiftData).length===0){
+    body.innerHTML='<div class="stats-empty">この月のシフトデータがありません。</div>';
+    return;
+  }
+  const{stats,businessDays,lunchSlotTotal,dinnerSlotTotal}=_calcStats(Y,M,shiftData);
+  const totalSlots=lunchSlotTotal+dinnerSlotTotal;
+  const totalHours=totalSlots*4;
+  /* 集計サマリーカード */
+  let html=`<div class="stats-summary">
+    <div class="stats-card"><div class="stats-card-label">営業日数</div><div class="stats-card-val">${businessDays}日</div></div>
+    <div class="stats-card"><div class="stats-card-label">☀ 昼コマ合計</div><div class="stats-card-val">${lunchSlotTotal}コマ</div><div class="stats-card-sub">${lunchSlotTotal*4}時間</div></div>
+    <div class="stats-card"><div class="stats-card-label">🌙 夜コマ合計</div><div class="stats-card-val">${dinnerSlotTotal}コマ</div><div class="stats-card-sub">${dinnerSlotTotal*4}時間</div></div>
+    <div class="stats-card"><div class="stats-card-label">合計人時</div><div class="stats-card-val">${totalHours}h</div><div class="stats-card-sub">人 × 時間</div></div>
+    <div class="stats-card"><div class="stats-card-label">出勤スタッフ数</div><div class="stats-card-val">${Object.keys(stats).length}人</div></div>
+  </div>`;
+  if(totalSlots===0){
+    body.innerHTML=html+'<div class="stats-empty">割り当てがありません。</div>';return;
+  }
+  /* スタッフ別時間・割合テーブル */
+  const sortedStaff=Object.entries(stats).sort((a,b)=>(b[1].lunch+b[1].dinner)-(a[1].lunch+a[1].dinner));
+  html+=`<h3 style="font-size:.95em;margin:12px 0 8px;color:#475569;font-weight:700">スタッフ別 出勤時間・割合</h3>`;
+  html+=`<div style="overflow-x:auto"><table class="stats-table">
+    <thead><tr>
+      <th>スタッフ</th>
+      <th>☀ 昼<br><span style="font-weight:400;font-size:.85em;color:#94a3b8">コマ / 時間</span></th>
+      <th>☀ 昼の占有率<br><span style="font-weight:400;font-size:.85em;color:#94a3b8">(全昼コマに対する%)</span></th>
+      <th>🌙 夜<br><span style="font-weight:400;font-size:.85em;color:#94a3b8">コマ / 時間</span></th>
+      <th>🌙 夜の占有率<br><span style="font-weight:400;font-size:.85em;color:#94a3b8">(全夜コマに対する%)</span></th>
+      <th>合計<br><span style="font-weight:400;font-size:.85em;color:#94a3b8">時間</span></th>
+      <th>全体シェア<br><span style="font-weight:400;font-size:.85em;color:#94a3b8">(人時/合計%)</span></th>
+    </tr></thead><tbody>`;
+  for(const[name,st]of sortedStaff){
+    const ls=st.lunch,ds=st.dinner;
+    const lh=ls*4,dh=ds*4,th=lh+dh;
+    const lpct=lunchSlotTotal?(ls/lunchSlotTotal*100):0;
+    const dpct=dinnerSlotTotal?(ds/dinnerSlotTotal*100):0;
+    const tpct=totalSlots?((ls+ds)/totalSlots*100):0;
+    html+=`<tr>
+      <td class="tname">${name}</td>
+      <td>${ls} <span style="color:#94a3b8">/ ${lh}h</span></td>
+      <td><span class="stats-bar lunch" style="--p:${lpct.toFixed(1)}%"></span>${lpct.toFixed(1)}%</td>
+      <td>${ds} <span style="color:#94a3b8">/ ${dh}h</span></td>
+      <td><span class="stats-bar dinner" style="--p:${dpct.toFixed(1)}%"></span>${dpct.toFixed(1)}%</td>
+      <td style="font-weight:700">${th}h</td>
+      <td><span class="stats-bar" style="--p:${tpct.toFixed(1)}%"></span>${tpct.toFixed(1)}%</td>
+    </tr>`;
+  }
+  html+='</tbody></table></div>';
+  /* 連勤テーブル */
+  html+=`<h3 style="font-size:.95em;margin:18px 0 8px;color:#475569;font-weight:700">最長連勤日数（昼夜どちらかでも出勤、定休日はスキップ）</h3>`;
+  const streakRows=sortedStaff.filter(([n,st])=>st.maxStreak>0).sort((a,b)=>b[1].maxStreak-a[1].maxStreak);
+  if(streakRows.length===0){
+    html+='<div class="stats-empty">該当データなし</div>';
+  }else{
+    html+=`<div style="overflow-x:auto"><table class="stats-table">
+      <thead><tr><th>スタッフ</th><th>最長連勤</th><th>該当期間</th><th>警告</th></tr></thead><tbody>`;
+    for(const[name,st]of streakRows){
+      const cls=st.maxStreak>=5?'streak-danger':st.maxStreak>=3?'streak-warn':'streak-low';
+      const warn=st.maxStreak>=5?'⚠ 5日以上 要注意':st.maxStreak>=3?'⚠ 3日以上':'—';
+      const period=st.streakStartDay&&st.streakEndDay?`${M+1}/${st.streakStartDay}〜${M+1}/${st.streakEndDay}`:'—';
+      html+=`<tr>
+        <td class="tname">${name}</td>
+        <td><span class="streak-badge ${cls}">${st.maxStreak}連勤</span></td>
+        <td>${period}</td>
+        <td style="font-size:.8em;color:#64748b">${warn}</td>
+      </tr>`;
+    }
+    html+='</tbody></table></div>';
+  }
+  body.innerHTML=html;
+}
 
 /* 初期 attach（初回同期後にも実行されるよう少し遅らせる） */
 setTimeout(()=>{try{_attachMonthListeners();updatePublishStatus();}catch(e){console.warn('init attach:',e);}},1200);
