@@ -320,7 +320,7 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
     <button class="cbtn cbtn-outline" onclick="openPublishPreview()" title="スタッフが見る形でプレビュー">👁 公開プレビュー</button>
     <button id="unpublishBtn" class="cbtn cbtn-outline" onclick="unpublishShift()" style="display:none;color:#991b1b;border-color:#fca5a5" title="公開を取り下げる">↩ 未公開に戻す</button>
     <button class="cbtn cbtn-green"   onclick="openExcelModal()">📊 Excel出力</button>
-    <button class="cbtn cbtn-outline" onclick="refreshAll();showUpdateToast('🔄 データを更新しました');" title="スタッフ希望など最新データを再読み込み">🔄 更新</button>
+    <button class="cbtn cbtn-outline" onclick="refreshAll();showUpdateToast('🔄 データを更新しました');" title="Firebaseから最新データを取り直す（通常は不要・自動同期されます）">⟳ 再同期</button>
     <span id="publishStatus"></span>
   </div>
   <!-- 改修4: 希望表示フィルター -->
@@ -593,6 +593,7 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 /* ════════════════════════════════════════
    DATA SYNC  — Firebase優先・db.jsonフォールバック
@@ -605,6 +606,7 @@ const _STATIC_KEYS=['pekin_shift_template','pekin_settings','pekin_users','pekin
 const _fbCfg={apiKey:"AIzaSyBygnsi6cByYRZigxlhR7d0ydVfpFGx8FQ",databaseURL:"https://pekin-shift-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"pekin-shift",appId:"1:600393805417:web:126fb18e1c5b64fc677cf8"};
 if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
 const _fbDb=firebase.database();
+try{firebase.auth().signInAnonymously().catch(e=>console.warn('anonAuth:',e));}catch(e){console.warn('auth init:',e);}
 /* ========== Dev/Prod 環境判定（Firebase namespace 切替） ==========
    URL に /gyozapekin2.github.io/ が含まれる場合は Dev 環境 → /pekin/db_dev/
    それ以外（gyozapekin.com 等）は Prod → /pekin/db/                */
@@ -1172,6 +1174,56 @@ function renderMetaInfo(){
 }
 
 /* 起動時に旧形式（"1"）のマイグレーション実行 */
+
+/* ============ パスワードハッシュ化 (SHA-256 + salt) ============ */
+async function hashPw(plain, salt){
+  const data=new TextEncoder().encode(salt+':'+(plain||''));
+  const buf=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function genSalt(){
+  const arr=new Uint8Array(12);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+/* ユーザー1人を移行: 平文password→passwordHash+passwordSalt */
+async function _migrateUserPw(u){
+  if(u.passwordHash)return false;
+  if(!u.password)return false;
+  const salt=genSalt();
+  const h=await hashPw(u.password,salt);
+  u.passwordSalt=salt;
+  u.passwordHash=h;
+  /* 平文は残しておく（移行期、ログイン互換のため） */
+  /* 完全削除は別途「平文削除」ボタンで実施 */
+  return true;
+}
+async function _migrateAllPasswords(){
+  const users=getUsers();
+  let changed=false;
+  for(const u of users){
+    if(await _migrateUserPw(u))changed=true;
+  }
+  if(changed){
+    saveUsers(users);
+    console.log('Migrated passwords to hash for users:',users.filter(u=>u.passwordHash).length);
+  }
+}
+async function _purgePlainPasswords(){
+  if(!confirm('全スタッフの平文パスワードを完全削除しますか？\n\n削除後はハッシュのみで認証されます。元には戻せません。'))return;
+  const users=getUsers();
+  let cnt=0;
+  for(const u of users){
+    if(u.password&&u.passwordHash){
+      delete u.password;
+      cnt++;
+    }
+  }
+  saveUsers(users);
+  showUpdateToast('🔒 '+cnt+'人の平文PWを削除しました');
+}
+setTimeout(_migrateAllPasswords,4500);
+
 function _migrateLegacyPublishedFlags(){
   for(let i=0;i<localStorage.length;i++){
     const k=localStorage.key(i);
@@ -1219,7 +1271,24 @@ setTimeout(_migrateLegacyAvailToSubpaths,3500);
    AVAILABILITY DATA
 ════════════════════════════════════════ */
 const availKey=(y,m)=>`pekin_avail_${y}-${String(m+1).padStart(2,'0')}`;
-function loadAvail(y,m){return JSON.parse(localStorage.getItem(availKey(y,m))||'{}');}
+function loadAvail(y,m){
+  const key=availKey(y,m);
+  const raw=localStorage.getItem(key);
+  if(!raw)return {};
+  try{
+    const p=JSON.parse(raw);
+    if(!p||typeof p!=='object')return {};
+    const fk=Object.keys(p)[0];
+    if(fk && typeof p[fk]==='string'){
+      const flat={};
+      for(const[s,j]of Object.entries(p)){
+        try{flat[s]=JSON.parse(j);}catch(e){flat[s]={};}
+      }
+      return flat;
+    }
+    return p;
+  }catch(e){return {};}
+}
 
 /* ════════════════════════════════════════
    SHIFT CALENDAR RENDERING
@@ -1342,9 +1411,10 @@ function makeShiftCell(y,m,d,other,isToday){
 }
 
 /* 改修4/5: 希望種別フィルター（シフト管理セル＆希望カレンダー共通） */
-const _availFilter={ok:true,maybe:true,off:false};
+const _availFilter=Object.assign({ok:true,maybe:true,off:false},JSON.parse(localStorage.getItem('pekin_pref_availFilter')||'{}'));
 function toggleAvailFilter(kind){
   _availFilter[kind]=!_availFilter[kind];
+  try{localStorage.setItem('pekin_pref_availFilter',JSON.stringify(_availFilter));}catch(e){}
   ['ok','maybe','off'].forEach(k=>{
     ['filter-'+k+'-btn','ov-filter-'+k+'-btn'].forEach(id=>{
       const b=document.getElementById(id);
@@ -1503,9 +1573,10 @@ function makeAvailDots(dk){
    OVERVIEW CALENDAR — Staff 希望 + 北京の希望
 ════════════════════════════════════════ */
 /* 改修5: 表示スロット切替（昼/夜/両方） */
-let _overviewSlot='lunch';
+let _overviewSlot=localStorage.getItem('pekin_pref_overviewSlot')||'lunch';
 function setOverviewSlot(s){
   _overviewSlot=s;
+  try{localStorage.setItem('pekin_pref_overviewSlot',s);}catch(e){}
   document.querySelectorAll('.ov-tab').forEach(b=>b.classList.remove('ov-tab-active'));
   const btn=document.getElementById('ov-tab-'+s);
   if(btn)btn.classList.add('ov-tab-active');
@@ -1920,7 +1991,7 @@ function openEditStaff(id){
   document.getElementById('staffOverlay').classList.add('open');
 }
 function closeStaffModal(){document.getElementById('staffOverlay').classList.remove('open');}
-function saveStaffMember(){
+async function saveStaffMember(){
   const name=document.getElementById('sName').value.trim();
   const username=document.getElementById('sUsername').value.trim();
   const password=document.getElementById('sPassword').value;
@@ -1931,12 +2002,20 @@ function saveStaffMember(){
     const idx=users.findIndex(u=>u.id===editingStaffId);
     if(idx>-1){
       users[idx].name=name;users[idx].username=username;users[idx].type=type;
-      if(password)users[idx].password=password;
+      if(password){
+        users[idx].password=password;
+        const _eSalt=genSalt();
+        const _eHash=await hashPw(password,_eSalt);
+        users[idx].passwordHash=_eHash;
+        users[idx].passwordSalt=_eSalt;
+      }
     }
   }else{
     if(password.length<6){alert('パスワードは6文字以上にしてください');return;}
     if(users.find(u=>u.username===username)){alert('このIDは既に使用されています');return;}
-    users.push({id:'s_'+Date.now(),name,username,password,role:'staff',type});
+    const _newSalt=genSalt();
+      const _newHash=await hashPw(password,_newSalt);
+      users.push({id:'s_'+Date.now(),name,username,password,passwordHash:_newHash,passwordSalt:_newSalt,role:'staff',type});
   }
   saveUsers(users);closeStaffModal();renderStaffPanel();
 }

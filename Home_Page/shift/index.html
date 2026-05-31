@@ -55,6 +55,7 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 /* -- FIREBASE 設定 -- */
 const _fbCfg={
@@ -65,6 +66,7 @@ const _fbCfg={
 };
 if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
 const _fbDb=firebase.database();
+try{firebase.auth().signInAnonymously().catch(e=>console.warn('anonAuth:',e));}catch(e){console.warn('auth init:',e);}
 /* ========== Dev/Prod 環境判定（Firebase namespace 切替） ==========
    URL に /gyozapekin2.github.io/ が含まれる場合は Dev 環境 → /pekin/db_dev/
    それ以外（gyozapekin.com 等）は Prod → /pekin/db/                */
@@ -141,24 +143,50 @@ function setSession(u){
   }));
 }
 
-function doLogin(){
+
+async function hashPw(plain, salt){
+  const data=new TextEncoder().encode(salt+':'+(plain||''));
+  const buf=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function _checkPw(user,pwInput,field){
+  const stored=user[field];
+  if(!stored && !user[field+'Hash'])return false;
+  const hashField=field+'Hash', saltField=field+'Salt';
+  if(user[hashField]&&user[saltField]){
+    const h=await hashPw(pwInput,user[saltField]);
+    return h===user[hashField];
+  }
+  return stored===pwInput;
+}
+async function doLogin(){
   const id=document.getElementById('loginId').value.trim();
   const pw=document.getElementById('loginPw').value;
   const users=getUsers();
   const masterPw=localStorage.getItem('pekin_master_pw')||'';
-  const u=users.find(x=>{
-    if(x.username!==id)return false;
-    if(x.role==='admin')return x.password===pw;
-    if(x.customPassword)return pw===x.customPassword||(masterPw&&pw===masterPw);
-    return pw===x.password||(masterPw&&pw===masterPw);
-  });
-  if(!u){
+  let matched=null;
+  for(const x of users){
+    if(x.username!==id)continue;
+    if(x.archived)continue;
+    if(x.role==='admin'){
+      if(await _checkPw(x,pw,'password')){matched=x;break;}
+    }else{
+      if(x.customPassword||x.customPasswordHash){
+        if(await _checkPw(x,pw,'customPassword')){matched=x;break;}
+        if(masterPw&&pw===masterPw){matched=x;break;}
+      }else{
+        if(await _checkPw(x,pw,'password')){matched=x;break;}
+        if(masterPw&&pw===masterPw){matched=x;break;}
+      }
+    }
+  }
+  if(!matched){
     document.getElementById('errMsg').style.display='block';
     document.getElementById('loginPw').value='';
     return;
   }
-  setSession(u);
-  location.href=u.role==='admin'?'admin.html':'staff.html';
+  setSession(matched);
+  location.href=matched.role==='admin'?'admin.html':'staff.html';
 }
 
 document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});

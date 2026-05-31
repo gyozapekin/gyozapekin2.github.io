@@ -265,6 +265,7 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 /* ════════════════════════════════════════
    DATA SYNC — Firebase優先・db.jsonフォールバック
@@ -273,6 +274,7 @@ const _STATIC_KEYS=['pekin_shift_template','pekin_settings','pekin_users','pekin
 const _fbCfg={apiKey:"AIzaSyBygnsi6cByYRZigxlhR7d0ydVfpFGx8FQ",databaseURL:"https://pekin-shift-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"pekin-shift",appId:"1:600393805417:web:126fb18e1c5b64fc677cf8"};
 if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
 const _fbDb=firebase.database();
+try{firebase.auth().signInAnonymously().catch(e=>console.warn('anonAuth:',e));}catch(e){console.warn('auth init:',e);}
 /* ========== Dev/Prod 環境判定（Firebase namespace 切替） ==========
    URL に /gyozapekin2.github.io/ が含まれる場合は Dev 環境 → /pekin/db_dev/
    それ以外（gyozapekin.com 等）は Prod → /pekin/db/                */
@@ -768,7 +770,7 @@ function getUsers(){
 }
 function saveUsers(users){localStorage.setItem('pekin_users',JSON.stringify(users));}
 
-function changePassword(){
+async function changePassword(){
   const currentPw=document.getElementById('acctCurrentPw').value;
   const newPw=document.getElementById('acctNewPw').value;
   const newPw2=document.getElementById('acctNewPw2').value;
@@ -789,14 +791,21 @@ function changePassword(){
   const myUser=users.find(u=>u.id===sess.userId);
   if(!myUser){showMsg('err','ユーザーが見つかりません');return;}
 
-  /* 現在のパスワード確認（デフォルトPW か 変更済みPW のどちらかと一致すればOK） */
-  const isValid=(myUser.password===currentPw)||(myUser.customPassword&&myUser.customPassword===currentPw);
-  if(!isValid){showMsg('err','現在のパスワードが違います');return;}
+  /* 現在のパスワード確認（デフォルトPW or 変更済みPW、ハッシュ/平文両対応） */
+  const okDefault=await _checkPwStaff(myUser,currentPw,'password');
+  const okCustom=await _checkPwStaff(myUser,currentPw,'customPassword');
+  if(!okDefault&&!okCustom){showMsg('err','現在のパスワードが違います');return;}
 
-  if(newPw===myUser.password&&!myUser.customPassword){
+  /* 新PW=デフォルトと同じ場合は弾く */
+  if(await _checkPwStaff(myUser,newPw,'password')&&!myUser.customPassword&&!myUser.customPasswordHash){
     showMsg('err','新しいパスワードはデフォルトパスワードと異なるものにしてください');return;
   }
-  myUser.customPassword=newPw;
+  /* ハッシュ化して保存 */
+  const newSalt=genSalt();
+  const newHash=await hashPw(newPw,newSalt);
+  myUser.customPasswordHash=newHash;
+  myUser.customPasswordSalt=newSalt;
+  delete myUser.customPassword; /* 平文は保存しない */
   saveUsers(users);
   document.getElementById('acctCurrentPw').value='';
   document.getElementById('acctNewPw').value='';
@@ -804,6 +813,25 @@ function changePassword(){
   showMsg('ok','✅ パスワードを変更しました');
 }
 
+
+async function hashPw(plain, salt){
+  const data=new TextEncoder().encode(salt+':'+(plain||''));
+  const buf=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function genSalt(){
+  const arr=new Uint8Array(12);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function _checkPwStaff(user,pwInput,field){
+  if(!user[field]&&!user[field+'Hash'])return false;
+  if(user[field+'Hash']&&user[field+'Salt']){
+    const h=await hashPw(pwInput,user[field+'Salt']);
+    return h===user[field+'Hash'];
+  }
+  return user[field]===pwInput;
+}
 /* ── INIT ── */
 loadMyAvail();
 renderRequestList();
