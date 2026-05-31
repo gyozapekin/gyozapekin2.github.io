@@ -505,12 +505,13 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
     <span id="statsMonthLabel" style="font-weight:700;color:#374151;font-size:1.05em">YYYY年 M月</span>
     <button class="cbtn cbtn-outline" onclick="changeMonth(1)">▶</button>
     <span style="margin-left:auto;font-size:.85em;color:#64748b">集計対象:</span>
-    <button id="statsSrcPub" class="cbtn cbtn-blue" onclick="setStatsSource('published')">✓ 公開済み</button>
-    <button id="statsSrcDraft" class="cbtn cbtn-outline" onclick="setStatsSource('draft')">下書き</button>
+    <button id="statsSrcPub" class="cbtn cbtn-outline" onclick="setStatsSource('published')">公開済み</button>
+    <button id="statsSrcDraft" class="cbtn cbtn-blue" onclick="setStatsSource('draft')">✓ 下書き（編集中）</button>
     <button class="cbtn cbtn-outline" onclick="renderStatsPanel()" title="再計算">⟳ 更新</button>
   </div>
   <p style="font-size:.78em;color:#64748b;margin:0 0 12px;padding:0 2px">
-    1コマ = 4時間で計算します。連勤判定は営業日のみ（定休日はスキップ）。
+    デフォルトは「下書き（編集中のシフト管理データ）」を集計します。公開前のバランス確認用。<br>
+    1コマ=4時間、連勤判定は営業日のみ（定休日はスキップ）。シフトを変更すると自動で再計算されます。
   </p>
   <div id="statsBody"></div>
 </div>
@@ -2867,7 +2868,14 @@ function _attachMonthListeners(){
           }
           localStorage.setItem(k,json);
           /* シフトデータが変わった → 再ロード&再描画 */
-          if(k.startsWith('pekin_shift_'))loadShift();
+          if(k.startsWith('pekin_shift_')){
+            loadShift();
+            /* 統計タブが開いてたら再計算 */
+            const sp=document.getElementById('panel-stats');
+            if(sp&&sp.classList.contains('active')&&typeof renderStatsPanel==='function'){
+              try{renderStatsPanel();}catch(e){}
+            }
+          }
           if(typeof render==='function')render();
           if(k.startsWith('pekin_avail_')){
             const ap=document.getElementById('panel-avail');
@@ -2903,11 +2911,14 @@ try{
 ════════════════════════════════════════ */
 const _origChangeMonth=changeMonth;
 changeMonth=function(d){
+  /* 統計タブがアクティブなら月変更後に再計算 */
+  const _statsActive=document.getElementById('panel-stats')?.classList.contains('active');
   /* 編集中なら一旦解放 */
   if(_isEditMode){releaseLock();_isEditMode=false;_updateEditModeUI();}
   _origChangeMonth(d);
   _attachMonthListeners();
   updatePublishStatus();
+  if(_statsActive&&typeof renderStatsPanel==='function'){try{renderStatsPanel();}catch(e){}}
 };
 const _origSwitchTab=switchTab;
 switchTab=function(name){
@@ -2919,6 +2930,11 @@ switchTab=function(name){
 const _origSaveShift=saveShift;
 saveShift=function(){
   _origSaveShift();
+  /* 統計タブがアクティブなら自動再計算 */
+  const sp=document.getElementById('panel-stats');
+  if(sp&&sp.classList.contains('active')&&typeof renderStatsPanel==='function'){
+    try{renderStatsPanel();}catch(e){console.warn('stats auto-refresh:',e);}
+  }
   /* 編集モード中のみメタ更新（閲覧モードでの偶発書き込みを避ける） */
   if(_isEditMode){
     const meta=getMeta();
@@ -2968,15 +2984,15 @@ window.addEventListener('beforeunload',()=>{
    STATS PANEL — 出勤時間・割合・連勤
    1コマ=4時間、連勤判定は営業日のみ
 ════════════════════════════════════════ */
-let _statsSource='published'; /* 'published' | 'draft' */
+let _statsSource='draft'; /* デフォルトを下書きに変更（公開前にバランス確認） */
 function setStatsSource(s){
   _statsSource=s;
   document.getElementById('statsSrcPub').className=s==='published'?'cbtn cbtn-blue':'cbtn cbtn-outline';
   document.getElementById('statsSrcDraft').className=s==='draft'?'cbtn cbtn-blue':'cbtn cbtn-outline';
   if(s==='published')document.getElementById('statsSrcPub').textContent='✓ 公開済み';
   else document.getElementById('statsSrcPub').textContent='公開済み';
-  if(s==='draft')document.getElementById('statsSrcDraft').textContent='✓ 下書き';
-  else document.getElementById('statsSrcDraft').textContent='下書き';
+  if(s==='draft')document.getElementById('statsSrcDraft').textContent='✓ 下書き（編集中）';
+  else document.getElementById('statsSrcDraft').textContent='下書き（編集中）';
   renderStatsPanel();
 }
 
