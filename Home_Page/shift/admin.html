@@ -579,6 +579,14 @@ const _STATIC_KEYS=['pekin_shift_template','pekin_settings','pekin_users','pekin
 const _fbCfg={apiKey:"AIzaSyBygnsi6cByYRZigxlhR7d0ydVfpFGx8FQ",databaseURL:"https://pekin-shift-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"pekin-shift",appId:"1:600393805417:web:126fb18e1c5b64fc677cf8"};
 if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
 const _fbDb=firebase.database();
+/* ========== Dev/Prod 環境判定（Firebase namespace 切替） ==========
+   URL に /gyozapekin2.github.io/ が含まれる場合は Dev 環境 → /pekin/db_dev/
+   それ以外（gyozapekin.com 等）は Prod → /pekin/db/                */
+const IS_DEV=(location.pathname.indexOf('/gyozapekin2.github.io/')!==-1)
+  ||(location.hostname==='localhost')||(location.hostname.indexOf('gyozapekin2.')===0);
+const FB_NS=IS_DEV?'pekin/db_dev':'pekin/db';
+console.log('[ENV]',IS_DEV?'DEV':'PROD','using',FB_NS);
+
 
 /* dbオブジェクトをlocalStorageに書き込む
    ★バージョン優先方式：
@@ -603,7 +611,7 @@ function _applyDb(db, force=false){
       const localRaw=localStorage.getItem('pekin_users');
       if(localRaw){
         /* ローカルにデータあり → ローカル優先（名前変更・削除も反映） */
-        _fbDb.ref('pekin/db').update({'pekin_users':localRaw});
+        _fbDb.ref(FB_NS).update({'pekin_users':localRaw});
         console.log('pekin_users: local authoritative, Firebase updated with local data');
         /* localStorageは変更しない */
       }else{
@@ -675,7 +683,7 @@ async function _doInitialSync(){
   /* ① Firebase（最大5秒タイムアウト） */
   try{
     const snap=await Promise.race([
-      _fbDb.ref('pekin/db').get(),
+      _fbDb.ref(FB_NS).get(),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
     ]);
     if(snap&&snap.exists()){
@@ -707,7 +715,7 @@ function _syncKeyToFirebase(key,value){
   try{
     if(typeof _fbDb!=='undefined'){
       const newV=Date.now();
-      _fbDb.ref('pekin/db').update({[key]:value,_v:newV});
+      _fbDb.ref(FB_NS).update({[key]:value,_v:newV});
       localStorage.setItem('pekin_db_v',String(newV));
     }
   }catch(e){console.warn('Firebase key sync failed:',key,e);}
@@ -737,7 +745,7 @@ function _pushAllToFirebase(){
     const newV=Date.now();
     payload._v=newV;
     localStorage.setItem('pekin_db_v',String(newV));
-    const p=_fbDb.ref('pekin/db').update(payload);
+    const p=_fbDb.ref(FB_NS).update(payload);
     p.then(()=>console.log('Full push to Firebase ✓',Object.keys(payload).length,'keys'))
      .catch(e=>console.warn('Full push failed:',e));
     return p;
@@ -755,7 +763,7 @@ window.addEventListener('pagehide',()=>{
 
 /* リアルタイムリスナー：スタッフが希望を送信したら管理画面に即反映 */
 let _adminListenerReady=false;
-_fbDb.ref('pekin/db').on('value',snap=>{
+_fbDb.ref(FB_NS).on('value',snap=>{
   if(!snap||!snap.exists())return;
   if(!_adminListenerReady){_adminListenerReady=true;return;} /* 初回はinitialSyncで処理済み */
   const db=snap.val();
@@ -1033,7 +1041,7 @@ function unpublishShift(){
   const pk=getPublishKey();
   localStorage.removeItem(pk);
   /* Firebase 側を null に */
-  try{_fbDb.ref('pekin/db').update({[pk]:null,_v:Date.now()});}catch(e){console.warn('unpublish fb:',e);}
+  try{_fbDb.ref(FB_NS).update({[pk]:null,_v:Date.now()});}catch(e){console.warn('unpublish fb:',e);}
   const meta=getMeta();
   delete meta.publishedAt;delete meta.publishedBy;delete meta.publishedByName;
   saveMeta(meta);
@@ -1114,7 +1122,7 @@ function _migrateLegacyPublishedFlags(){
       const draftRaw=localStorage.getItem('pekin_shift_'+yyyymm);
       if(draftRaw){
         localStorage.setItem(k,draftRaw);
-        try{_fbDb.ref('pekin/db').update({[k]:draftRaw});}catch(e){}
+        try{_fbDb.ref(FB_NS).update({[k]:draftRaw});}catch(e){}
         console.log('Migrated legacy published flag → snapshot:',k);
       }
     }
@@ -1833,7 +1841,7 @@ function clearMasterPassword(){
   if(!confirm('マスターパスワードを削除しますか？\n削除後はこの機能が無効になります。'))return;
   localStorage.removeItem(MASTER_PW_KEY);
   /* Firebaseからも削除 */
-  try{_fbDb.ref('pekin/db').update({[MASTER_PW_KEY]:null,_v:Date.now()});}catch(e){console.warn('fb rm master pw:',e);}
+  try{_fbDb.ref(FB_NS).update({[MASTER_PW_KEY]:null,_v:Date.now()});}catch(e){console.warn('fb rm master pw:',e);}
   document.getElementById('masterPwInput').value='';
   document.getElementById('masterPwStatus').innerHTML='<span style="color:#991b1b">🗑 マスターパスワードを削除しました</span>';
   setTimeout(()=>{document.getElementById('masterPwStatus').textContent='';renderMasterPwStatus();},2000);
@@ -2362,7 +2370,7 @@ function showUpdateToast(msg){
 /* refreshAll — Firebaseから最新データを取得して再描画 */
 function refreshAll(){
   try{
-    _fbDb.ref('pekin/db').get().then(snap=>{
+    _fbDb.ref(FB_NS).get().then(snap=>{
       if(snap&&snap.exists()){_applyDb(snap.val(),true);_reRenderAllPanels();}
     }).catch(e=>console.warn('refreshAll:',e));
   }catch(e){console.warn('refreshAll:',e);}
@@ -2413,7 +2421,7 @@ async function tryAcquireLock(force){
   const now=Date.now();
   try{
     /* Firebase transaction で原子的にチェック&セット */
-    const ref=_fbDb.ref('pekin/db/'+lockKey);
+    const ref=_fbDb.ref(FB_NS+'/'+lockKey);
     const result=await ref.transaction(curr=>{
       let currObj=null;
       if(curr){
@@ -2433,7 +2441,7 @@ async function tryAcquireLock(force){
       return true;
     }
     /* 取得失敗 → 現在の保持者情報を表示 */
-    const snap=await _fbDb.ref('pekin/db/'+lockKey).get();
+    const snap=await _fbDb.ref(FB_NS+'/'+lockKey).get();
     if(snap.exists()){
       const v=snap.val();
       const obj=typeof v==='string'?JSON.parse(v):v;
@@ -2459,7 +2467,7 @@ async function releaseLock(){
   const k=_activeLockKey;
   _activeLockKey=null;
   try{
-    await _fbDb.ref('pekin/db').update({[k]:null});
+    await _fbDb.ref(FB_NS).update({[k]:null});
   }catch(e){console.warn('releaseLock:',e);}
   try{localStorage.removeItem(k);}catch(e){}
 }
@@ -2473,7 +2481,7 @@ function startHeartbeat(){
     const myName=(typeof sess!=='undefined'&&sess&&sess.name)||'管理者';
     const payload={heldBy:me,heldByName:myName,heartbeatAt:Date.now(),
       acquiredAt:(_currentLock&&_currentLock.acquiredAt)||Date.now()};
-    try{_fbDb.ref('pekin/db').update({[_activeLockKey]:JSON.stringify(payload)});}
+    try{_fbDb.ref(FB_NS).update({[_activeLockKey]:JSON.stringify(payload)});}
     catch(e){console.warn('heartbeat:',e);}
   },HEARTBEAT_INTERVAL_MS);
 }
@@ -2559,7 +2567,7 @@ function _attachMonthListeners(){
     'pekin_meta_'+ym
   ];
   keys.forEach(k=>{
-    const ref=_fbDb.ref('pekin/db/'+k);
+    const ref=_fbDb.ref(FB_NS+'/'+k);
     const cb=ref.on('value',snap=>{
       try{
         const val=snap.val();
@@ -2684,7 +2692,7 @@ window.addEventListener('beforeunload',()=>{
   if(_activeLockKey){
     try{
       /* navigator.sendBeacon が使えればベストだがFirebaseは update() を fire-and-forget で */
-      _fbDb.ref('pekin/db').update({[_activeLockKey]:null});
+      _fbDb.ref(FB_NS).update({[_activeLockKey]:null});
     }catch(e){}
   }
 });

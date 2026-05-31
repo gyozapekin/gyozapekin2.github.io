@@ -273,6 +273,14 @@ const _STATIC_KEYS=['pekin_shift_template','pekin_settings','pekin_users','pekin
 const _fbCfg={apiKey:"AIzaSyBygnsi6cByYRZigxlhR7d0ydVfpFGx8FQ",databaseURL:"https://pekin-shift-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"pekin-shift",appId:"1:600393805417:web:126fb18e1c5b64fc677cf8"};
 if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
 const _fbDb=firebase.database();
+/* ========== Dev/Prod 環境判定（Firebase namespace 切替） ==========
+   URL に /gyozapekin2.github.io/ が含まれる場合は Dev 環境 → /pekin/db_dev/
+   それ以外（gyozapekin.com 等）は Prod → /pekin/db/                */
+const IS_DEV=(location.pathname.indexOf('/gyozapekin2.github.io/')!==-1)
+  ||(location.hostname==='localhost')||(location.hostname.indexOf('gyozapekin2.')===0);
+const FB_NS=IS_DEV?'pekin/db_dev':'pekin/db';
+console.log('[ENV]',IS_DEV?'DEV':'PROD','using',FB_NS);
+
 
 /* dbをlocalStorageに書き込む。force=trueで全データ強制上書き
    ※ pekin_lock_* はスタッフ側では使わないので無視 */
@@ -314,7 +322,7 @@ function _finishSync(){
 async function _doInitialSync(){
   try{
     const snap=await Promise.race([
-      _fbDb.ref('pekin/db').get(),
+      _fbDb.ref(FB_NS).get(),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
     ]);
     if(snap&&snap.exists()){_applyDb(snap.val(),true);console.log('Firebase sync ✓');}
@@ -337,7 +345,7 @@ _doInitialSync();
    avail データは上書きしない（スタッフの未保存入力を守るため）
    pekin_published_* の変更を検知 → renderShiftView で snapshot 反映 */
 let _fbListenerReady=false;
-_fbDb.ref('pekin/db').on('value',snap=>{
+_fbDb.ref(FB_NS).on('value',snap=>{
   if(!snap||!snap.exists())return;
   if(!_fbListenerReady){_fbListenerReady=true;return;} /* 初回はinitialSyncで処理済み */
   const db=snap.val();
@@ -442,7 +450,7 @@ function saveAvail(y,m,data){
   localStorage.setItem(key,json);
   /* Firebaseにも保存（管理画面でリアルタイム反映） */
   try{
-    _fbDb.ref('pekin/db').update({[key]:json});
+    _fbDb.ref(FB_NS).update({[key]:json});
     console.log('Avail saved to Firebase:',key);
   }catch(e){console.warn('Firebase avail save failed:',e);}
 }

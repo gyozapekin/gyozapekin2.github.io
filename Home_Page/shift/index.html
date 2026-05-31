@@ -65,6 +65,14 @@ const _fbCfg={
 };
 if(!firebase.apps.length)firebase.initializeApp(_fbCfg);
 const _fbDb=firebase.database();
+/* ========== Dev/Prod 環境判定（Firebase namespace 切替） ==========
+   URL に /gyozapekin2.github.io/ が含まれる場合は Dev 環境 → /pekin/db_dev/
+   それ以外（gyozapekin.com 等）は Prod → /pekin/db/                */
+const IS_DEV=(location.pathname.indexOf('/gyozapekin2.github.io/')!==-1)
+  ||(location.hostname==='localhost')||(location.hostname.indexOf('gyozapekin2.')===0);
+const FB_NS=IS_DEV?'pekin/db_dev':'pekin/db';
+console.log('[ENV]',IS_DEV?'DEV':'PROD','using',FB_NS);
+
 
 /* ★バージョン優先方式：
    - 初回ロード、またはFirebaseの_vがローカル以上 → Firebaseを採用
@@ -90,7 +98,7 @@ function _applyDb(db){
 (async function syncAndRedirect(){
   try{
     const snap=await Promise.race([
-      _fbDb.ref('pekin/db').get(),
+      _fbDb.ref(FB_NS).get(),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
     ]);
     if(snap&&snap.exists())_applyDb(snap.val());
