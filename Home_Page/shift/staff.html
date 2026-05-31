@@ -483,13 +483,21 @@ const DOW_CLS2=['sun','mon','tue','wed','thu','fri','sat'];
 function updateDeadlineUI(){
   /* デフォルト: リクエスト月の「前月20日」が締切 */
   let deadline=new Date(reqY,reqM-1,20,23,59,59);
-  /* 管理者が pekin_settings.deadlines[YYYY-MM] でオーバーライド可能 */
+  /* 優先順: 個別スタッフ別 > 月別共通 > デフォルト */
   try{
     const s=JSON.parse(localStorage.getItem('pekin_settings')||'{}');
     const ymKey=`${reqY}-${String(reqM+1).padStart(2,'0')}`;
-    if(s.deadlines&&s.deadlines[ymKey]){
-      /* YYYY-MM-DD形式の文字列を期待 */
-      const ov=new Date(s.deadlines[ymKey]+'T23:59:59');
+    let raw=null;
+    /* 1) 個別スタッフ */
+    if(s.deadlinesPerStaff&&s.deadlinesPerStaff[ymKey]&&sess&&sess.userId&&s.deadlinesPerStaff[ymKey][sess.userId]){
+      raw=s.deadlinesPerStaff[ymKey][sess.userId];
+    }
+    /* 2) 月別共通 */
+    else if(s.deadlines&&s.deadlines[ymKey]){
+      raw=s.deadlines[ymKey];
+    }
+    if(raw){
+      const ov=new Date(raw+'T23:59:59');
       if(!isNaN(ov.getTime()))deadline=ov;
     }
   }catch(e){}

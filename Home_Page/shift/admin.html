@@ -487,7 +487,7 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
 
   <h3 style="font-size:.95em;margin:18px 0 8px;color:#475569;font-weight:700">📅 シフト希望締切設定</h3>
   <p style="font-size:.78em;color:#64748b;margin:0 0 8px">
-    各月のシフト希望提出締切を管理します。デフォルトは「前月の20日」です。<br>
+    各月のシフト希望提出締切を管理します。デフォルトは「前月の20日」です。<br>個別: 特定スタッフだけ違う締切にしたい場合は各月行の「👤 個別」ボタンで調整。<br>
     特定月の締切を変更: 日付を入力して「保存」。元の20日に戻す: 「↺ リセット」（上書き設定済みの月のみ有効）。
   </p>
   <div id="deadlineWrap"></div>
@@ -1877,6 +1877,7 @@ function renderDeadlinePanel(){
   if(!wrap)return;
   const s=getSettings();
   const overrides=s.deadlines||{};
+  const overrides_perstaff=s.deadlinesPerStaff||{};
   /* 表示対象: 現在月から12ヶ月先まで */
   const now=new Date();
   let html='<table style="width:100%;border-collapse:collapse;font-size:.84em"><thead><tr style="background:#f8fafc">'
@@ -1893,18 +1894,23 @@ function renderDeadlinePanel(){
     const cur=overrides[ym]||def;
     const isOverride=!!overrides[ym];
     const past=new Date(cur+'T23:59:59')<now;
+    const pStaff=(overrides_perstaff||{})[ym]||{};
+    const personalCount=Object.keys(pStaff).length;
     html+=`<tr style="border-bottom:0.5px solid #e2e8f0">
       <td style="padding:6px 8px;font-weight:600">${y}年${m+1}月</td>
       <td style="padding:6px 8px">
         <input type="date" value="${cur}" id="dl_${ym}" style="font-size:.9em;padding:3px 6px;border:1px solid #cbd5e1;border-radius:4px">
         ${isOverride?'<span style="font-size:.7em;color:#0369a1;margin-left:4px">⚙ 上書き中</span>':'<span style="font-size:.7em;color:#94a3b8;margin-left:4px">デフォルト（前月20日）</span>'}
+        ${personalCount>0?`<span style="font-size:.7em;color:#9333ea;margin-left:4px">👤 個別${personalCount}件</span>`:''}
       </td>
       <td style="padding:6px 8px;font-size:.85em">${past?'<span style="color:#991b1b;font-weight:600">受付終了</span>':'<span style="color:#065f46;font-weight:600">受付中</span>'}</td>
       <td style="padding:6px 8px;text-align:center">
         <button class="cbtn cbtn-blue" style="padding:2px 10px;font-size:.78em" onclick="saveDeadline('${ym}')">保存</button>
         <button class="cbtn cbtn-outline" style="padding:2px 8px;font-size:.78em;margin-left:4px${isOverride?'':';opacity:.4;cursor:not-allowed'}" onclick="resetDeadline('${ym}')" ${isOverride?'':'disabled title="現在デフォルト（上書きなし）"'}>↺ リセット</button>
+        <button class="cbtn cbtn-outline" style="padding:2px 8px;font-size:.78em;margin-left:4px;color:#7c3aed;border-color:#c4b5fd" onclick="toggleStaffDeadline('${ym}')" title="個別スタッフ別の締切を調整">👤 個別</button>
       </td>
-    </tr>`;
+    </tr>
+    <tr id="staffdl_${ym}" style="display:none"></tr>`;
   }
   html+='</tbody></table>';
   wrap.innerHTML=html;
@@ -1919,6 +1925,81 @@ function saveDeadline(ym){
   renderDeadlinePanel();
   showUpdateToast(`✔ ${ym}の締切を ${inp.value} に設定しました`);
 }
+
+/* ====== 個別スタッフ別締切設定 ====== */
+function toggleStaffDeadline(ym){
+  const row=document.getElementById('staffdl_'+ym);
+  if(!row)return;
+  if(row.style.display==='none'||!row.style.display){
+    row.style.display='';
+    renderStaffDeadlineRow(ym);
+  }else{
+    row.style.display='none';
+  }
+}
+function renderStaffDeadlineRow(ym){
+  const row=document.getElementById('staffdl_'+ym);
+  if(!row)return;
+  const s=getSettings();
+  const overrides=(s.deadlinesPerStaff||{})[ym]||{};
+  const monthOv=(s.deadlines||{})[ym];
+  const [y,m]=ym.split('-').map(Number);
+  const defaultDate=_getDefaultDeadline(y,m-1);
+  const monthLevel=monthOv||defaultDate;
+  const staffList=typeof getStaffListForMonth==='function'?getStaffListForMonth(y,m-1):getStaffList();
+  let html='<td colspan="4" style="background:#f8fafc;padding:10px 14px">'
+    +'<div style="font-size:.78em;color:#475569;margin-bottom:8px">'
+    +`<strong>${y}年${m}月</strong> の個別スタッフ別調整<br>`
+    +`全員共通: <strong>${monthLevel}</strong>${monthOv?'<span style="color:#0369a1;margin-left:4px">⚙ 月別上書き中</span>':' <span style="color:#94a3b8">(デフォルト)</span>'}<br>`
+    +`特定スタッフだけ異なる締切にしたい場合、下記で日付を変更→保存。元に戻すには「↺リセット」。</div>`
+    +'<table style="width:100%;border-collapse:collapse;font-size:.82em">'
+    +'<thead><tr style="background:#fff"><th style="padding:5px 8px;text-align:left;border-bottom:1px solid #cbd5e1">スタッフ</th>'
+    +'<th style="padding:5px 8px;text-align:left;border-bottom:1px solid #cbd5e1">この月の締切</th>'
+    +'<th style="padding:5px 8px;text-align:center;border-bottom:1px solid #cbd5e1">操作</th></tr></thead><tbody>';
+  for(const u of staffList){
+    if(u.role==='admin')continue;
+    const isPersonal=!!overrides[u.id];
+    const cur=overrides[u.id]||monthLevel;
+    html+=`<tr style="border-bottom:0.5px solid #e2e8f0${u.archived?';opacity:.6':''}">
+      <td style="padding:5px 8px;font-weight:600">${u.name}${u.archived?'<span class="archived-badge">退職済</span>':''}</td>
+      <td style="padding:5px 8px">
+        <input type="date" value="${cur}" id="dlS_${ym}_${u.id}" style="font-size:.9em;padding:3px 6px;border:1px solid #cbd5e1;border-radius:4px">
+        ${isPersonal?'<span style="font-size:.7em;color:#0369a1;margin-left:4px">⚙ 個別</span>':'<span style="font-size:.7em;color:#94a3b8;margin-left:4px">共通</span>'}
+      </td>
+      <td style="padding:5px 8px;text-align:center">
+        <button class="cbtn cbtn-blue" style="padding:2px 8px;font-size:.74em" onclick="saveStaffDeadline('${ym}','${u.id}')">保存</button>
+        <button class="cbtn cbtn-outline" style="padding:2px 6px;font-size:.74em;margin-left:3px${isPersonal?'':';opacity:.4;cursor:not-allowed'}" onclick="resetStaffDeadline('${ym}','${u.id}')" ${isPersonal?'':'disabled'}>↺ リセット</button>
+      </td>
+    </tr>`;
+  }
+  html+='</tbody></table></td>';
+  row.innerHTML=html;
+}
+function saveStaffDeadline(ym,sid){
+  const inp=document.getElementById('dlS_'+ym+'_'+sid);
+  if(!inp||!inp.value){alert('日付を入力してください');return;}
+  const s=getSettings();
+  if(!s.deadlinesPerStaff)s.deadlinesPerStaff={};
+  if(!s.deadlinesPerStaff[ym])s.deadlinesPerStaff[ym]={};
+  s.deadlinesPerStaff[ym][sid]=inp.value;
+  saveSettings(s);
+  renderStaffDeadlineRow(ym);
+  renderDeadlinePanel();
+  showUpdateToast('✔ 個別締切を設定しました');
+}
+function resetStaffDeadline(ym,sid){
+  if(!confirm('このスタッフの個別締切設定を削除しますか？\n削除後は月別共通／デフォルトが適用されます。'))return;
+  const s=getSettings();
+  if(s.deadlinesPerStaff&&s.deadlinesPerStaff[ym]&&s.deadlinesPerStaff[ym][sid]){
+    delete s.deadlinesPerStaff[ym][sid];
+    if(Object.keys(s.deadlinesPerStaff[ym]).length===0)delete s.deadlinesPerStaff[ym];
+    saveSettings(s);
+  }
+  renderStaffDeadlineRow(ym);
+  renderDeadlinePanel();
+  showUpdateToast('↩ 個別締切を解除しました');
+}
+
 function resetDeadline(ym){
   if(!confirm(`${ym} の締切をデフォルト（前月20日）に戻しますか？`))return;
   const s=getSettings();
