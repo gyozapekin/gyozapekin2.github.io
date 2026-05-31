@@ -91,10 +91,10 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
 /* 昼・夜とも同じ青ベース（店からの要望・未回答） */
 .lunch .ntag,.dinner .ntag{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
 /* スタッフ希望と照合した状態別カラー */
-.ntag.ntag-pending{background:#dbeafe!important;color:#1e40af!important;border:1px solid #93c5fd!important}
-.ntag.ntag-ok-confirmed{background:#d1fae5!important;color:#065f46!important;border:1px solid #6ee7b7!important;font-weight:700!important}
-.ntag.ntag-maybe{background:#fef9c3!important;color:#854d0e!important;border:1px solid #fde047!important;font-weight:700!important}
-.ntag.ntag-conflict{background:#fee2e2!important;color:#991b1b!important;border:1px solid #fca5a5!important;font-weight:700!important}
+.ntag.ntag-pending{background:#dbeafe!important;color:#1e40af!important;border:1.5px solid #2563eb!important;font-weight:700!important}
+.ntag.ntag-ok-confirmed{background:#065f46!important;color:#fff!important;border:1.5px solid #064e3b!important;font-weight:700!important}
+.ntag.ntag-maybe{background:#fef9c3!important;color:#854d0e!important;border:1.5px solid #ca8a04!important;font-weight:700!important}
+.ntag.ntag-conflict{background:#fee2e2!important;color:#991b1b!important;border:1.5px solid #dc2626!important;font-weight:700!important}
 .nempty{font-size:.68em;color:#aaa}
 .ext-tag{font-size:.6em;background:#fee2e2;color:#b91c1c;border-radius:3px;padding:1px 4px;font-weight:700}
 .avail-row{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px}
@@ -125,14 +125,23 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
 .ntag-assigned:hover{opacity:.6;text-decoration:line-through}
 .avail-suggest-row{display:flex;flex-wrap:wrap;gap:2px;margin-top:4px;
   padding-top:4px;border-top:1px dashed #e2e8f0}
-.ntag-suggest-ok{background:#d1fae5!important;color:#065f46!important;
-  border:1px dashed #6ee7b7!important;cursor:pointer;transition:all .12s}
+.ntag-suggest-ok{background:#f0fdf4!important;color:#065f46!important;
+  border:1px dashed #6ee7b7!important;font-size:.6em!important;padding:1px 5px!important;cursor:pointer;transition:all .12s}
 .ntag-suggest-ok:hover{background:#a7f3d0!important;border-style:solid!important}
-.ntag-suggest-maybe{background:#fef9c3!important;color:#854d0e!important;
-  border:1px dashed #fde047!important;cursor:pointer;transition:all .12s}
+.ntag-suggest-maybe{background:#fefce8!important;color:#854d0e!important;
+  border:1px dashed #fde047!important;font-size:.6em!important;padding:1px 5px!important;cursor:pointer;transition:all .12s}
 .ntag-suggest-maybe:hover{background:#fef08a!important;border-style:solid!important}
-.ntag-off{background:#fee2e2!important;color:#991b1b!important;
-  border:1px solid #fca5a5!important;opacity:.6;font-size:.58em!important;cursor:default}
+.ntag-off{background:#fef2f2!important;color:#991b1b!important;
+  border:1px dashed #fca5a5!important;font-size:.6em!important;padding:1px 5px!important;cursor:default}
+.avail-suggest-separator{border-top:1px dashed #94a3b8;margin:3px 0 2px}
+.filter-btn{padding:3px 10px;border-radius:14px;font-size:.72em;font-weight:600;cursor:pointer;border:1px solid;transition:all .15s;margin-right:4px}
+.filter-btn.filter-on-ok{background:#d1fae5;color:#065f46;border-color:#065f46}
+.filter-btn.filter-on-maybe{background:#fef9c3;color:#854d0e;border-color:#854d0e}
+.filter-btn.filter-on-off{background:#fee2e2;color:#991b1b;border-color:#991b1b}
+.filter-btn.filter-disabled{background:transparent;color:#94a3b8;border-color:#cbd5e1;border-style:dashed;text-decoration:line-through}
+.archived-badge{font-size:.6em;background:#f1f5f9;color:#64748b;padding:1px 5px;border-radius:8px;margin-left:4px;font-weight:500}
+.ov-tab{padding:5px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#64748b;font-size:.82em;font-weight:600;cursor:pointer}
+.ov-tab.ov-tab-active{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
 .avail-suggest-label{font-size:.58em;color:#94a3b8;letter-spacing:.04em;width:100%;
   margin-bottom:1px;display:block}
 
@@ -314,6 +323,13 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
     <button class="cbtn cbtn-outline" onclick="refreshAll();showUpdateToast('🔄 データを更新しました');" title="スタッフ希望など最新データを再読み込み">🔄 更新</button>
     <span id="publishStatus"></span>
   </div>
+  <!-- 改修4: 希望表示フィルター -->
+  <div id="availFilterBar" style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap;align-items:center;font-size:.8em">
+    <span style="color:#64748b">希望表示:</span>
+    <button id="filter-ok-btn" class="filter-btn filter-on-ok" onclick="toggleAvailFilter('ok')">○出勤可</button>
+    <button id="filter-maybe-btn" class="filter-btn filter-on-maybe" onclick="toggleAvailFilter('maybe')">△調整可</button>
+    <button id="filter-off-btn" class="filter-btn filter-disabled" onclick="toggleAvailFilter('off')">×休み</button>
+  </div>
   <div class="cal-head">
     <div class="cal-head-cell sun">日</div><div class="cal-head-cell">月</div>
     <div class="cal-head-cell">火</div><div class="cal-head-cell">水</div>
@@ -339,6 +355,16 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
         <span style="color:#1d4ed8;font-weight:700">☀</span>=昼　<span style="color:#92400e;font-weight:700">🌙</span>=夜（北京の希望）
       </span>
     </div>
+  </div>
+  <!-- 改修5: 昼/夜タブ + 希望種別フィルター -->
+  <div id="overviewControls" style="display:flex;gap:8px;margin:6px 0;flex-wrap:wrap;align-items:center;font-size:.85em">
+    <button id="ov-tab-lunch" class="ov-tab ov-tab-active" onclick="setOverviewSlot('lunch')">☀ 昼</button>
+    <button id="ov-tab-dinner" class="ov-tab" onclick="setOverviewSlot('dinner')">🌙 夜</button>
+    <button id="ov-tab-both" class="ov-tab" onclick="setOverviewSlot('both')">両方</button>
+    <span style="margin-left:auto;color:#64748b">希望:</span>
+    <button id="ov-filter-ok-btn" class="filter-btn filter-on-ok" onclick="toggleAvailFilter('ok')">○</button>
+    <button id="ov-filter-maybe-btn" class="filter-btn filter-on-maybe" onclick="toggleAvailFilter('maybe')">△</button>
+    <button id="ov-filter-off-btn" class="filter-btn filter-disabled" onclick="toggleAvailFilter('off')">×</button>
   </div>
   <div class="cal-head">
     <div class="cal-head-cell sun">日</div><div class="cal-head-cell">月</div>
@@ -771,8 +797,16 @@ _fbDb.ref(FB_NS).on('value',snap=>{
   let updated=false;
   Object.entries(db).forEach(([k,v])=>{
     if(!k.startsWith('pekin_avail_'))return;
+    let reconstructed={};
+    if(v&&typeof v==='string'){
+      try{reconstructed=JSON.parse(v);}catch(e){}
+    } else if(v&&typeof v==='object'){
+      for(const [sid,sjson] of Object.entries(v)){
+        try{reconstructed[sid]=typeof sjson==='string'?JSON.parse(sjson):sjson;}catch(e){reconstructed[sid]={};}
+      }
+    }
+    const nxt=JSON.stringify(reconstructed);
     const cur=localStorage.getItem(k);
-    const nxt=typeof v==='string'?v:JSON.stringify(v);
     if(cur!==nxt){localStorage.setItem(k,nxt);updated=true;}
   });
   if(!updated)return;
@@ -832,7 +866,33 @@ function saveUsers(u){
   localStorage.setItem('pekin_users',json);
   _syncKeyToFirebase('pekin_users',json);
 }
-function getStaffList(){return getUsers().filter(u=>u.role==='staff');}
+function getStaffList(){
+  const all=getUsers().filter(u=>u.role==='staff');
+  return all.filter(u=>!u.archived);
+}
+function getAllStaffList(){
+  /* archive 含む（管理画面の編集用） */
+  return getUsers().filter(u=>u.role!=='admin');
+}
+function getStaffListForMonth(y,m){
+  /* 当月に希望もしくはシフトに登場するアーカイブ済スタッフはゴーストとして残す */
+  const active=getStaffList();
+  const archived=getAllStaffList().filter(u=>u.archived);
+  const ak=`pekin_avail_${y}-${String(m+1).padStart(2,'0')}`;
+  const av=JSON.parse(localStorage.getItem(ak)||'{}');
+  const sk=`pekin_shift_${y}-${String(m+1).padStart(2,'0')}`;
+  const sd=JSON.parse(localStorage.getItem(sk)||'{}');
+  const ghosts=archived.filter(u=>{
+    if(av[u.id])return true;
+    for(const dk in sd){
+      const se=sd[dk];
+      if(((se.lunch||{}).names||[]).includes(u.name))return true;
+      if(((se.dinner||{}).names||[]).includes(u.name))return true;
+    }
+    return false;
+  });
+  return [...active,...ghosts];
+}
 
 /* ════════════════════════════════════════
    SETTINGS (shared with staff.html via localStorage)
@@ -1131,6 +1191,30 @@ function _migrateLegacyPublishedFlags(){
 /* 同期完了後にマイグレーションを実行（_finishSync後の少し遅らせて） */
 setTimeout(_migrateLegacyPublishedFlags,2500);
 
+/* レガシー avail（pekin_avail_YYYY-MM が JSON文字列で全員分入っている形）を
+   サブパス形式（pekin_avail_YYYY-MM/{staffId}=JSON文字列）に移行する */
+async function _migrateLegacyAvailToSubpaths(){
+  try{
+    const snap=await _fbDb.ref(FB_NS).get();
+    const all=snap.val()||{};
+    for(const [key,val] of Object.entries(all)){
+      if(!key.startsWith('pekin_avail_'))continue;
+      if(typeof val==='string'){
+        let parsed=null;
+        try{parsed=JSON.parse(val);}catch(e){continue;}
+        if(!parsed||typeof parsed!=='object')continue;
+        const subpaths={};
+        for(const [sid,sdata] of Object.entries(parsed)){
+          subpaths[sid]=JSON.stringify(sdata);
+        }
+        await _fbDb.ref(FB_NS+'/'+key).set(subpaths);
+        console.log('Migrated avail to subpath:',key);
+      }
+    }
+  }catch(e){console.warn('migrate avail:',e);}
+}
+setTimeout(_migrateLegacyAvailToSubpaths,3500);
+
 /* ════════════════════════════════════════
    AVAILABILITY DATA
 ════════════════════════════════════════ */
@@ -1257,13 +1341,30 @@ function makeShiftCell(y,m,d,other,isToday){
   return cell;
 }
 
+/* 改修4/5: 希望種別フィルター（シフト管理セル＆希望カレンダー共通） */
+const _availFilter={ok:true,maybe:true,off:false};
+function toggleAvailFilter(kind){
+  _availFilter[kind]=!_availFilter[kind];
+  ['ok','maybe','off'].forEach(k=>{
+    ['filter-'+k+'-btn','ov-filter-'+k+'-btn'].forEach(id=>{
+      const b=document.getElementById(id);
+      if(!b)return;
+      ['filter-on-ok','filter-on-maybe','filter-on-off','filter-disabled'].forEach(c=>b.classList.remove(c));
+      if(_availFilter[k])b.classList.add('filter-on-'+k);
+      else b.classList.add('filter-disabled');
+    });
+  });
+  if(typeof render==='function')render();
+  if(document.getElementById('panel-overview')?.classList.contains('active')&&typeof renderOverview==='function')renderOverview();
+}
+
 function makeShiftBlock(k,type,se,label){
   const bl=document.createElement('div');
   bl.className=`shift-block ${type}`;
   bl.onclick=()=>openEdit(k,type);
 
   const av=loadAvail(Y,M);
-  const staffList=getStaffList();
+  const staffList=getStaffListForMonth(Y,M);
   const names=(se.names||[]).filter(n=>n&&n.trim());
 
   /* ═══════════════════════════════════════
@@ -1331,35 +1432,47 @@ function makeShiftBlock(k,type,se,label){
   }
   bl.appendChild(row);
 
+  /* 確定/候補の区切り線（改修4） */
+  if(names.length>0&&(okList.length||maybeList.length||offList.length)){
+    const sep=document.createElement('div');sep.className='avail-suggest-separator';
+    bl.appendChild(sep);
+  }
+
   /* ═══════════════════════════════════════
-     STEP 4: 採用候補バッジ（未割当スタッフ）
+     STEP 4: 採用候補バッジ（未割当スタッフ）— フィルター反映
   ═══════════════════════════════════════ */
   if(okList.length||maybeList.length||offList.length){
     const sr=document.createElement('div');sr.className='avail-suggest-row';
     sr.onclick=(ev)=>ev.stopPropagation();
-    okList.forEach(n=>{
-      const t=document.createElement('span');
-      t.className='ntag ntag-suggest-ok';
-      t.textContent='+'+n;
-      t.title=`${n}（出勤可）→ クリックでシフトに追加`;
-      t.onclick=(ev)=>{ev.stopPropagation();toggleStaffInShift(k,type,n,true);};
-      sr.appendChild(t);
-    });
-    maybeList.forEach(n=>{
-      const t=document.createElement('span');
-      t.className='ntag ntag-suggest-maybe';
-      t.textContent='+'+n;
-      t.title=`${n}（調整可）→ クリックでシフトに追加`;
-      t.onclick=(ev)=>{ev.stopPropagation();toggleStaffInShift(k,type,n,true);};
-      sr.appendChild(t);
-    });
-    offList.forEach(n=>{
-      const t=document.createElement('span');
-      t.className='ntag ntag-off';
-      t.textContent='×'+n;
-      t.title=`${n}：休み希望`;
-      sr.appendChild(t);
-    });
+    if(_availFilter.ok){
+      okList.forEach(n=>{
+        const t=document.createElement('span');
+        t.className='ntag ntag-suggest-ok';
+        t.textContent='+'+n;
+        t.title=`${n}（出勤可）→ クリックでシフトに追加`;
+        t.onclick=(ev)=>{ev.stopPropagation();toggleStaffInShift(k,type,n,true);};
+        sr.appendChild(t);
+      });
+    }
+    if(_availFilter.maybe){
+      maybeList.forEach(n=>{
+        const t=document.createElement('span');
+        t.className='ntag ntag-suggest-maybe';
+        t.textContent='+'+n;
+        t.title=`${n}（調整可）→ クリックでシフトに追加`;
+        t.onclick=(ev)=>{ev.stopPropagation();toggleStaffInShift(k,type,n,true);};
+        sr.appendChild(t);
+      });
+    }
+    if(_availFilter.off){
+      offList.forEach(n=>{
+        const t=document.createElement('span');
+        t.className='ntag ntag-off';
+        t.textContent='×'+n;
+        t.title=`${n}：休み希望`;
+        sr.appendChild(t);
+      });
+    }
     bl.appendChild(sr);
   }
 
@@ -1389,12 +1502,22 @@ function makeAvailDots(dk){
 /* ════════════════════════════════════════
    OVERVIEW CALENDAR — Staff 希望 + 北京の希望
 ════════════════════════════════════════ */
+/* 改修5: 表示スロット切替（昼/夜/両方） */
+let _overviewSlot='lunch';
+function setOverviewSlot(s){
+  _overviewSlot=s;
+  document.querySelectorAll('.ov-tab').forEach(b=>b.classList.remove('ov-tab-active'));
+  const btn=document.getElementById('ov-tab-'+s);
+  if(btn)btn.classList.add('ov-tab-active');
+  renderOverview();
+}
+
 function renderOverview(){
   document.getElementById('ovMonthLabel').textContent=`${Y}年 ${M+1}月`;
   const grid=document.getElementById('overviewGrid');
   grid.innerHTML='';
   const av=loadAvail(Y,M);
-  const staffList=getStaffList();
+  const staffList=getStaffListForMonth(Y,M);
   const first=new Date(Y,M,1).getDay();
   const total=new Date(Y,M+1,0).getDate();
   const prev=new Date(Y,M,0).getDate();
@@ -1458,8 +1581,14 @@ function renderOverview(){
             maybeArr.forEach(n=>{const b=document.createElement('span');b.className='ov-badge ov-maybe';b.textContent='△'+n;rowEl.appendChild(b);});
             cell.appendChild(rowEl);
           };
-          mkRow('☀','#1d4ed8',lOk,lOff,lMaybe);
-          mkRow('🌙','#92400e',dOk,dOff,dMaybe);
+          if(_overviewSlot==='lunch'||_overviewSlot==='both') mkRow('☀','#1d4ed8',
+            _availFilter.ok?lOk:[],
+            _availFilter.off?lOff:[],
+            _availFilter.maybe?lMaybe:[]);
+          if(_overviewSlot==='dinner'||_overviewSlot==='both') mkRow('🌙','#92400e',
+            _availFilter.ok?dOk:[],
+            _availFilter.off?dOff:[],
+            _availFilter.maybe?dMaybe:[]);
         } else {
           const no=document.createElement('div');no.className='ov-no-avail';no.textContent='希望未入力';
           cell.appendChild(no);
@@ -1557,7 +1686,7 @@ function renderAvailPanel(){
   document.getElementById('availMonthLabel').textContent=`${Y}年 ${M+1}月`;
   const body=document.getElementById('availBody');
   const avail=loadAvail(Y,M);
-  const staffList=getStaffList();
+  const staffList=getStaffListForMonth(Y,M);
   if(staffList.length===0){body.innerHTML='<div class="empty-state">スタッフが登録されていません</div>';return;}
   const days=new Date(Y,M+1,0).getDate();
 
@@ -1574,7 +1703,7 @@ function renderAvailPanel(){
     const typeLabel={part:'パート',fixed:'固定',free:'フリー',alt:'アルバイト'}[s.type]||'';
     const badgeCls={part:'sb-part',fixed:'sb-fixed',free:'sb-free',alt:'sb-alt'}[s.type]||'';
     const hasEntry=Object.keys(sav).length>0;
-    html+=`<tr><td style="text-align:left;font-weight:600">${s.name}</td>
+    html+=`<tr${s.archived?' style="opacity:.6;background:#fafafa"':''}><td style="text-align:left;font-weight:600">${s.name}${s.archived?'<span class="archived-badge">退職済</span>':''}</td>
       <td><span class="sbadge2 ${badgeCls}">${typeLabel}</span></td>
       <td style="text-align:center">${hasEntry
         ?`<button onclick="deleteStaffAvail('${s.id}','${s.name}')" title="${M+1}月の${s.name}さんの希望を削除"
@@ -1589,9 +1718,9 @@ function renderAvailPanel(){
       const dv=typeof v==='string'?v:(v.dinner||'');
       const sym=(x)=>x==='ok'?'○':x==='off'?'×':x==='maybe'?'△':'—';
       const cls=(x)=>x==='ok'?'atag-ok':x==='off'?'atag-off':x==='maybe'?'atag-maybe':'atag-none';
-      html+=`<td style="white-space:nowrap;padding:4px 2px">
-        <span class="atag ${cls(lv)}" style="font-size:.6em;padding:1px 3px" title="昼">☀${sym(lv)}</span>
-        <span class="atag ${cls(dv)}" style="font-size:.6em;padding:1px 3px;margin-left:1px" title="夜">🌙${sym(dv)}</span>
+      html+=`<td style="white-space:nowrap;padding:3px 2px;vertical-align:top;text-align:center">
+        <div class="atag ${cls(lv)}" style="font-size:.6em;padding:1px 3px;display:block;margin-bottom:1px" title="昼">☀${sym(lv)}</div>
+        <div class="atag ${cls(dv)}" style="font-size:.6em;padding:1px 3px;display:block" title="夜">🌙${sym(dv)}</div>
       </td>`;
     }
     html+='</tr>';
@@ -1862,13 +1991,15 @@ let _deletedStaff=null;
 let _deleteUndoTimer=null;
 
 function deleteStaff(id){
-  if(!confirm('このスタッフを削除しますか？'))return;
+  if(!confirm('このスタッフをアーカイブしますか？\n過去の希望・シフトデータは保持されます。'))return;
   const users=getUsers();
-  _deletedStaff=users.find(u=>u.id===id);
-  if(!_deletedStaff)return;
-  saveUsers(users.filter(u=>u.id!==id));
+  const idx=users.findIndex(u=>u.id===id);
+  if(idx<0)return;
+  _deletedStaff={...users[idx]};
+  users[idx].archived=true;
+  users[idx].archivedAt=Date.now();
+  saveUsers(users);
   renderStaffPanel();
-  /* シフト管理・希望カレンダーも即時更新 */
   render();
   if(document.getElementById('panel-overview').classList.contains('active'))renderOverview();
   if(document.getElementById('panel-avail').classList.contains('active'))renderAvailPanel();
@@ -1939,25 +2070,23 @@ function _showDeleteExpiredWarning(name){
 
 function _undoDeleteStaff(){
   if(!_deletedStaff)return;
+  const id=_deletedStaff.id;
   clearTimeout(_deleteUndoTimer);
-  const restored=_deletedStaff;
   _deletedStaff=null;
-
-  /* ユーザーリストに戻す（希望データはlocalStorageに残っているのでそのまま復元） */
   const users=getUsers();
-  users.push(restored);
-  saveUsers(users);
-
-  /* 全タブを再描画 */
+  const idx=users.findIndex(u=>u.id===id);
+  if(idx>-1){
+    delete users[idx].archived;
+    delete users[idx].archivedAt;
+    saveUsers(users);
+  }
   renderStaffPanel();
   render();
   if(document.getElementById('panel-overview').classList.contains('active'))renderOverview();
   if(document.getElementById('panel-avail').classList.contains('active'))renderAvailPanel();
-
-  /* Undoトーストを閉じて成功トースト表示 */
   const undo=document.getElementById('undoDeleteToast');
   if(undo){undo.style.opacity='0';setTimeout(()=>undo.remove(),350);}
-  showUpdateToast(`↩ 「${restored.name}」を復元しました`);
+  showUpdateToast('↩ 復元しました');
 }
 
 /* ════════════════════════════════════════
@@ -2587,7 +2716,28 @@ function _attachMonthListeners(){
           renderMetaInfo();
           return;
         }
-        /* shift/published/availの更新 */
+        /* avail関連の値処理（新形式：サブパスのオブジェクト、旧形式：JSON文字列） */
+        if(k.startsWith('pekin_avail_')){
+          let reconstructed={};
+          if(val&&typeof val==='string'){
+            try{reconstructed=JSON.parse(val);}catch(e){}
+          } else if(val&&typeof val==='object'){
+            for(const [sid,sjson] of Object.entries(val)){
+              try{reconstructed[sid]=typeof sjson==='string'?JSON.parse(sjson):sjson;}catch(e){reconstructed[sid]={};}
+            }
+          }
+          const newJson=JSON.stringify(reconstructed);
+          const cur=localStorage.getItem(k);
+          if(cur!==newJson){
+            localStorage.setItem(k,newJson);
+            const ap=document.getElementById('panel-avail');
+            const op=document.getElementById('panel-overview');
+            if(ap&&ap.classList.contains('active')&&typeof renderAvailPanel==='function')renderAvailPanel();
+            if(op&&op.classList.contains('active')&&typeof renderOverview==='function')renderOverview();
+          }
+          return;
+        }
+        /* shift/publishedの更新 */
         const json=val===null||val===undefined?null:(typeof val==='string'?val:JSON.stringify(val));
         const cur=localStorage.getItem(k);
         if(json===null){

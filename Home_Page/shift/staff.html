@@ -448,10 +448,11 @@ function saveAvail(y,m,data){
   const key=availKey(y,m);
   const json=JSON.stringify(data);
   localStorage.setItem(key,json);
-  /* Firebaseにも保存（管理画面でリアルタイム反映） */
+  /* Firebaseには自分のサブパスのみ書き込む（他人の希望を上書きしないため） */
   try{
-    _fbDb.ref(FB_NS).update({[key]:json});
-    console.log('Avail saved to Firebase:',key);
+    const mine=data[sess.userId]||{};
+    _fbDb.ref(FB_NS+'/'+key+'/'+sess.userId).set(JSON.stringify(mine));
+    console.log('Avail saved to Firebase (subpath):',key,sess.userId);
   }catch(e){console.warn('Firebase avail save failed:',e);}
 }
 let myAvail={};
@@ -808,4 +809,4 @@ loadMyAvail();
 renderRequestList();
 </script>
 </body>
-</html>�
+</html>
