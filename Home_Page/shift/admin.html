@@ -1919,6 +1919,26 @@ function saveDeadline(ym){
   const inp=document.getElementById('dl_'+ym);
   if(!inp||!inp.value){alert('日付を入力してください');return;}
   const s=getSettings();
+  const [y,m]=ym.split('-').map(Number);
+  const defaultVal=_getDefaultDeadline(y,m-1);
+  const currentSaved=(s.deadlines||{})[ym]||null;
+  /* 値がデフォルトと同じ→上書きを作らない／既存があれば削除 */
+  if(inp.value===defaultVal){
+    if(currentSaved){
+      delete s.deadlines[ym];
+      saveSettings(s);
+      renderDeadlinePanel();
+      showUpdateToast('↩ 上書きを解除しデフォルトに戻しました');
+    }else{
+      showUpdateToast('変更なし（既にデフォルトです）');
+    }
+    return;
+  }
+  /* 既存と同じ→何もしない */
+  if(currentSaved===inp.value){
+    showUpdateToast('変更なし（既に同じ日付です）');
+    return;
+  }
   if(!s.deadlines)s.deadlines={};
   s.deadlines[ym]=inp.value;
   saveSettings(s);
@@ -1937,6 +1957,10 @@ function toggleStaffDeadline(ym){
     row.style.display='none';
   }
 }
+function closeStaffDeadline(ym){
+  const row=document.getElementById('staffdl_'+ym);
+  if(row){row.style.display='none';row.innerHTML='';}
+}
 function renderStaffDeadlineRow(ym){
   const row=document.getElementById('staffdl_'+ym);
   if(!row)return;
@@ -1947,8 +1971,9 @@ function renderStaffDeadlineRow(ym){
   const defaultDate=_getDefaultDeadline(y,m-1);
   const monthLevel=monthOv||defaultDate;
   const staffList=typeof getStaffListForMonth==='function'?getStaffListForMonth(y,m-1):getStaffList();
-  let html='<td colspan="4" style="background:#f8fafc;padding:10px 14px">'
-    +'<div style="font-size:.78em;color:#475569;margin-bottom:8px">'
+  let html='<td colspan="4" style="background:#f8fafc;padding:10px 14px;position:relative">'
+    +`<button onclick="closeStaffDeadline('${ym}')" style="position:absolute;top:8px;right:10px;background:#fff;border:1px solid #cbd5e1;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:.82em;color:#475569" title="閉じる（変更なしで戻る）">✕ 閉じる</button>`
+    +'<div style="font-size:.78em;color:#475569;margin-bottom:8px;padding-right:80px">'
     +`<strong>${y}年${m}月</strong> の個別スタッフ別調整<br>`
     +`全員共通: <strong>${monthLevel}</strong>${monthOv?'<span style="color:#0369a1;margin-left:4px">⚙ 月別上書き中</span>':' <span style="color:#94a3b8">(デフォルト)</span>'}<br>`
     +`特定スタッフだけ異なる締切にしたい場合、下記で日付を変更→保存。元に戻すには「↺リセット」。</div>`
@@ -1979,6 +2004,27 @@ function saveStaffDeadline(ym,sid){
   const inp=document.getElementById('dlS_'+ym+'_'+sid);
   if(!inp||!inp.value){alert('日付を入力してください');return;}
   const s=getSettings();
+  const [y,m]=ym.split('-').map(Number);
+  const monthLevel=(s.deadlines||{})[ym]||_getDefaultDeadline(y,m-1);
+  const currentPersonal=((s.deadlinesPerStaff||{})[ym]||{})[sid];
+  /* 値が月別共通と同じ→個別を作らない／既存があれば削除 */
+  if(inp.value===monthLevel){
+    if(currentPersonal){
+      delete s.deadlinesPerStaff[ym][sid];
+      if(Object.keys(s.deadlinesPerStaff[ym]).length===0)delete s.deadlinesPerStaff[ym];
+      saveSettings(s);
+      renderStaffDeadlineRow(ym);renderDeadlinePanel();
+      showUpdateToast('↩ 個別設定を解除し共通に戻しました');
+    }else{
+      showUpdateToast('変更なし（既に共通設定です）');
+    }
+    return;
+  }
+  /* 既存個別と同じ */
+  if(currentPersonal===inp.value){
+    showUpdateToast('変更なし（既に同じ日付です）');
+    return;
+  }
   if(!s.deadlinesPerStaff)s.deadlinesPerStaff={};
   if(!s.deadlinesPerStaff[ym])s.deadlinesPerStaff[ym]={};
   s.deadlinesPerStaff[ym][sid]=inp.value;
