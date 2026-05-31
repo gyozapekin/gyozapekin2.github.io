@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>海鮮餃子ペキン 管理者操作マニュアル</title>
+<style>
+:root{--red:#c0392b;--ink:#1e293b;--muted:#64748b;--bg:#f8fafc;--border:#e2e8f0;--info:#dbeafe;--info-d:#1e40af;--warn:#fef9c3;--warn-d:#854d0e;--ok:#d1fae5;--ok-d:#065f46;--purple:#7c3aed}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif;font-size:16px;line-height:1.75}
+.container{max-width:920px;margin:0 auto;padding:24px 18px 80px;background:#fff;min-height:100vh;box-shadow:0 0 24px rgba(0,0,0,.04)}
+header{border-bottom:3px solid var(--red);padding-bottom:14px;margin-bottom:22px}
+header h1{font-size:1.6em;color:var(--red);font-weight:700}
+header .sub{font-size:.85em;color:var(--muted);margin-top:6px}
+nav.toc{background:var(--bg);border-radius:10px;padding:14px 18px;margin-bottom:26px;border:1px solid var(--border)}
+nav.toc h2{font-size:1.05em;color:var(--ink);margin-bottom:10px;font-weight:700}
+nav.toc ol{padding-left:1.4em;line-height:2}
+nav.toc a{color:var(--info-d);text-decoration:none}
+nav.toc a:hover{text-decoration:underline}
+h2.sec{font-size:1.4em;color:var(--ink);font-weight:700;margin:42px 0 14px;padding-left:12px;border-left:5px solid var(--red);scroll-margin-top:20px}
+h3{font-size:1.1em;color:var(--ink);font-weight:700;margin:22px 0 8px}
+h4{font-size:1em;color:var(--ink);font-weight:700;margin:16px 0 6px;color:#334155}
+p{margin:10px 0}
+ul,ol{padding-left:1.6em;margin:10px 0}
+li{margin:5px 0}
+strong{color:var(--red);font-weight:700}
+em{color:var(--purple);font-style:normal;font-weight:600}
+.tip{background:var(--info);border-left:4px solid var(--info-d);padding:12px 16px;border-radius:6px;margin:14px 0;color:#1e3a8a}
+.warn{background:var(--warn);border-left:4px solid var(--warn-d);padding:12px 16px;border-radius:6px;margin:14px 0;color:#713f12}
+.ok{background:var(--ok);border-left:4px solid var(--ok-d);padding:12px 16px;border-radius:6px;margin:14px 0;color:#064e3b}
+.danger{background:#fee2e2;border-left:4px solid #b91c1c;padding:12px 16px;border-radius:6px;margin:14px 0;color:#7f1d1d}
+.mock{border:1px solid var(--border);border-radius:8px;padding:14px;margin:12px 0;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.mock-title{font-size:.72em;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+.btn{display:inline-block;padding:6px 14px;border-radius:6px;font-size:.88em;font-weight:600;border:1px solid;margin:2px;cursor:default;text-decoration:none}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-blue{background:#2563eb;color:#fff;border-color:#2563eb}
+.btn-green{background:#16a34a;color:#fff;border-color:#16a34a}
+.btn-purple{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.btn-outline{background:#fff;color:var(--ink);border-color:#cbd5e1}
+.btn-gray{background:#64748b;color:#fff;border-color:#64748b}
+table.t{width:100%;border-collapse:collapse;margin:12px 0;font-size:.92em}
+.t th,.t td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+.t th{background:var(--bg);font-weight:700}
+.toptop{position:fixed;right:18px;bottom:18px;background:var(--red);color:#fff;padding:10px 14px;border-radius:24px;text-decoration:none;font-size:.85em;box-shadow:0 4px 12px rgba(192,57,43,.35);z-index:99}
+.kbd{font-family:monospace;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:1px 6px;font-size:.88em}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin:10px 0;flex-wrap:wrap}
+.tab{padding:8px 14px;background:var(--bg);border:1px solid var(--border);border-bottom:none;border-radius:6px 6px 0 0;font-size:.88em;font-weight:600;color:var(--muted)}
+.tab.active{background:#fff;color:var(--red);border-color:var(--red);border-bottom:2px solid #fff;margin-bottom:-2px}
+.cell-mock{border:1px solid var(--border);border-radius:6px;padding:8px;margin:4px;background:#fff;min-height:84px;font-size:.85em}
+.cell-mock .date{font-weight:700;text-align:right;color:#334155;font-size:.92em}
+.cell-mock .slot{margin-top:6px;padding:4px 6px;border-radius:4px;background:#f1f5f9}
+.staff-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.78em;margin:1px;font-weight:600}
+.staff-tag.confirmed-day{background:#bbf7d0;color:#065f46;border:1px solid #4ade80}
+.staff-tag.confirmed-night{background:#86efac;color:#064e3b;border:1px solid #16a34a}
+.staff-tag.candidate{background:#f1f5f9;color:#334155;border:1px dashed #94a3b8;font-style:italic}
+.staff-tag.maybe{background:#fef9c3;color:#854d0e;border:1px dashed #fde047;font-style:italic}
+.staff-tag.off{background:#fee2e2;color:#991b1b;border:1px dashed #fca5a5;font-style:italic}
+.separator{border-top:1px dashed #cbd5e1;margin:6px 0}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:.78em;font-weight:600}
+.b-pub{background:#d1fae5;color:#065f46}
+.b-draft{background:#fef9c3;color:#854d0e}
+.b-lock{background:#fee2e2;color:#991b1b}
+.b-edit{background:#fef3c7;color:#92400e}
+.faq dt{font-weight:700;color:var(--red);margin-top:14px;font-size:1.02em}
+.faq dd{margin:5px 0 8px 1.2em;color:#475569}
+.deadline-row{display:grid;grid-template-columns:90px 1fr 100px 80px;gap:8px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:6px;margin:4px 0;background:#fff;font-size:.9em}
+@media (max-width:520px){body{font-size:15px}.container{padding:18px 12px 80px}.deadline-row{grid-template-columns:80px 1fr;gap:6px}}
+@media print{.toptop{display:none}body{background:#fff}.container{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>海鮮餃子ペキン 管理者操作マニュアル</h1>
+  <div class="sub">シフト管理画面の全機能を解説。スタッフ操作との連携・公開フロー・運用ベストプラクティス。</div>
+</header>
+
+<nav class="toc">
+  <h2>もくじ</h2>
+  <ol>
+    <li><a href="#login">ログイン</a></li>
+    <li><a href="#screen">画面の構成（7つのタブ）</a></li>
+    <li><a href="#shift">シフト管理（最重要）</a></li>
+    <li><a href="#overview">希望カレンダー</a></li>
+    <li><a href="#list">希望一覧</a></li>
+    <li><a href="#staff">スタッフ管理</a></li>
+    <li><a href="#settings">設定（締切設定含む）</a></li>
+    <li><a href="#template">テンプレート</a></li>
+    <li><a href="#stats">統計</a></li>
+    <li><a href="#publish">公開フロー（運用ガイド）</a></li>
+    <li><a href="#sync">リアルタイム同期と編集ロック</a></li>
+    <li><a href="#security">セキュリティ・パスワード</a></li>
+    <li><a href="#trouble">トラブルシュート</a></li>
+  </ol>
+</nav>
+
+<h2 class="sec" id="login">1. ログイン</h2>
+
+<table class="t">
+  <thead><tr><th>項目</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>URL（本番）</td><td><span class="kbd">https://gyozapekin.com/shift/</span></td></tr>
+    <tr><td>URL（Dev）</td><td><span class="kbd">https://gyozapekin.com/gyozapekin2.github.io/shift/admin.html?nocache=N</span>（Nは適当な数字）</td></tr>
+    <tr><td>管理者ID</td><td><span class="kbd">admin</span></td></tr>
+    <tr><td>パスワード</td><td>初回ログイン後、必ず変更（アカウントタブから）</td></tr>
+  </tbody>
+</table>
+
+<h3>マスターパスワード機能</h3>
+<p>設定タブで「管理者マスターパスワード」を設定すると、その値で全スタッフアカウントにログインできます。スタッフがパスワードを忘れた時の代理ログイン用です。</p>
+<div class="warn">
+マスターパスワードは管理者だけが知っている強力な値にしてください。他人に知られると全アカウントに不正アクセス可能になります。
+</div>
+
+<h2 class="sec" id="screen">2. 画面の構成（7つのタブ）</h2>
+
+<div class="tabs">
+  <div class="tab active">シフト管理</div>
+  <div class="tab">希望カレンダー</div>
+  <div class="tab">希望一覧</div>
+  <div class="tab">スタッフ管理</div>
+  <div class="tab">設定</div>
+  <div class="tab">テンプレート</div>
+  <div class="tab">統計</div>
+</div>
+
+<table class="t">
+  <thead><tr><th>タブ</th><th>役割</th></tr></thead>
+  <tbody>
+    <tr><td><strong>シフト管理</strong></td><td>月別カレンダーで、確定／候補スタッフを編集。公開する操作もここから</td></tr>
+    <tr><td><strong>希望カレンダー</strong></td><td>スタッフ希望と北京の希望を月単位で見渡す。昼夜切替・フィルター可</td></tr>
+    <tr><td><strong>希望一覧</strong></td><td>スタッフ × 日付のマトリクス表示</td></tr>
+    <tr><td><strong>スタッフ管理</strong></td><td>スタッフの追加・編集・退職処理</td></tr>
+    <tr><td><strong>設定</strong></td><td>定休日・特別休業・締切・マスターパスワード</td></tr>
+    <tr><td><strong>テンプレート</strong></td><td>A週/B週の2週ローテーション設計</td></tr>
+    <tr><td><strong>統計</strong></td><td>稼働時間・割合・連勤数</td></tr>
+  </tbody>
+</table>
+
+<h2 class="sec" id="shift">3. シフト管理（最重要）</h2>
+
+<h3>3-1. 上部ツールバー</h3>
+<div class="mock">
+  <div class="mock-title">月切替・操作ボタン群</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0">
+    <span class="btn btn-outline">◀</span>
+    <span class="btn btn-outline">2026年 7月</span>
+    <span class="btn btn-outline">▶</span>
+    <span class="btn btn-red">✎ 編集モードに入る</span>
+    <span class="btn btn-outline">↻ デフォルト</span>
+    <span class="btn btn-outline">↶ 戻る</span>
+    <span class="btn btn-outline">↷ 進む</span>
+    <span class="btn btn-blue">✔ 公開する</span>
+    <span class="btn btn-outline">👁 公開プレビュー</span>
+    <span class="btn btn-outline">↩ 未公開に戻す</span>
+    <span class="btn btn-green">📋 Excel出力</span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
+    <span class="btn btn-outline">⟳ 再同期</span>
+    <span class="badge b-pub">公開済み</span>
+  </div>
+</div>
+
+<table class="t">
+  <thead><tr><th>ボタン</th><th>機能</th></tr></thead>
+  <tbody>
+    <tr><td><strong>編集モードに入る</strong></td><td>シフトの編集を開始。他の管理者は閲覧モードになる（同時編集ロック）</td></tr>
+    <tr><td><strong>デフォルト</strong></td><td>テンプレートからその月を再生成（既存編集は破棄）。確認ダイアログあり</td></tr>
+    <tr><td><strong>戻る／進む</strong></td><td>直近の編集を取消／やり直し</td></tr>
+    <tr><td><strong>公開する</strong></td><td>スタッフから見える状態にする。確認ダイアログ表示</td></tr>
+    <tr><td><strong>公開プレビュー</strong></td><td>スタッフ視点でシフトを確認（公開前にチェック）</td></tr>
+    <tr><td><strong>未公開に戻す</strong></td><td>公開を取り下げる。下書きは残ったまま</td></tr>
+    <tr><td><strong>Excel出力</strong></td><td>当該月のシフトをExcelファイルにダウンロード</td></tr>
+    <tr><td><strong>再同期</strong></td><td>Firebaseから最新データを取り直す（通常は自動）</td></tr>
+  </tbody>
+</table>
+
+<h3>3-2. 希望表示フィルター</h3>
+<p>カレンダーセル内の候補スタッフ表示を絞り込めます。</p>
+<div class="mock">
+  <div class="mock-title">フィルターボタン</div>
+  <div style="margin:6px 0">
+    希望表示： <span class="btn btn-green">○ 出勤可</span>
+    <span class="btn btn-outline" style="background:#fef9c3;border-color:#fde047;color:#854d0e">△ 調整可</span>
+    <span class="btn btn-outline" style="background:#fee2e2;border-color:#fca5a5;color:#991b1b">× 休み</span>
+  </div>
+  <div style="color:#475569;font-size:.9em">押す／解除でON/OFF。設定はブラウザに保存されます。</div>
+</div>
+
+<h3>3-3. カレンダーセルの見方</h3>
+
+<div class="mock">
+  <div class="mock-title">セル例</div>
+  <div class="cell-mock" style="max-width:300px">
+    <div class="date">5日 土</div>
+    <div class="slot">
+      <span style="font-size:.85em;color:#c0392b">☀ 昼</span>
+      <span class="staff-tag confirmed-day">ふさちゃん</span>
+      <span class="staff-tag confirmed-day">まーちゃん</span><br>
+      <span class="staff-tag candidate">+ぶんくん</span>
+      <span class="staff-tag candidate">+ちなちゃん</span>
+    </div>
+    <div class="slot">
+      <span style="font-size:.85em;color:#1d4ed8">🌙 夜</span>
+      <span class="staff-tag confirmed-night">ひろせくん</span>
+      <span class="staff-tag confirmed-night">るいくん</span><br>
+      <span class="staff-tag maybe">△みきちゃん</span>
+    </div>
+  </div>
+</div>
+
+<table class="t">
+  <thead><tr><th>表示</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td><span class="staff-tag confirmed-day">名前</span></td><td>確定スタッフ（濃い緑タグ）。クリックで外せる</td></tr>
+    <tr><td><span class="staff-tag candidate">+名前</span></td><td>候補（出勤可で希望あり、未確定）。クリックで確定に追加</td></tr>
+    <tr><td><span class="staff-tag maybe">△名前</span></td><td>候補（調整可で希望）。クリックで確定に追加</td></tr>
+    <tr><td><span class="staff-tag off">×名前</span></td><td>休み希望（デフォルト非表示）</td></tr>
+    <tr><td>水平点線</td><td>確定者と候補者の区切り</td></tr>
+  </tbody>
+</table>
+
+<h3>3-4. 日付カードのその他</h3>
+<ul>
+  <li>右上の日付の左に「定休にする／定休に戻す／営業にする」ボタン</li>
+  <li>定休日は灰色背景、臨時休業日は薄赤背景＋「臨」マーク</li>
+  <li>セル下部の色付きドット：その日の希望提出状況（緑=多い／黄=普通／赤=少ない）</li>
+</ul>
+
+<div class="tip">
+編集モードを抜けると自動保存されます。「保存」ボタンはありません。Firebase に即時反映されます。
+</div>
+
+<h2 class="sec" id="overview">4. 希望カレンダー</h2>
+
+<p>スタッフ希望と北京の希望を月単位で見渡す画面です。誰がどの日に何を希望しているか、ひと目で把握できます。</p>
+
+<div class="mock">
+  <div class="mock-title">上部ツールバー</div>
+  <div style="margin:6px 0">
+    <span class="btn btn-outline">◀ 2026年 7月 ▶</span>
+    時間帯：
+    <span class="btn btn-red">昼</span>
+    <span class="btn btn-outline">夜</span>
+    <span class="btn btn-outline">両方</span>
+  </div>
+  <div style="margin:6px 0">
+    フィルター：
+    <span class="btn btn-green">○</span>
+    <span class="btn btn-outline" style="background:#fef9c3;border-color:#fde047;color:#854d0e">△</span>
+    <span class="btn btn-outline" style="background:#fee2e2;border-color:#fca5a5;color:#991b1b">×</span>
+  </div>
+  <div style="margin-top:6px;font-size:.88em;color:#475569">
+    凡例： ○出勤可 ×休み希望 △調整可 ☀昼 🌙夜
+  </div>
+</div>
+
+<h3>使い方のコツ</h3>
+<ul>
+  <li><strong>昼／夜タブ</strong>で時間帯を絞ると、その時間帯だけの候補が見やすい</li>
+  <li>「△調整可」だけを表示すると、空きが出た時に頼める人がわかる</li>
+  <li>北京の希望（店から）は紫色の枠で表示</li>
+  <li>フィルターの設定はブラウザに保存されます</li>
+</ul>
+
+<h2 class="sec" id="list">5. 希望一覧</h2>
+
+<p>スタッフ × 日付のマトリクス表です。各セルの上段が昼、下段が夜。</p>
+
+<div class="mock">
+  <div class="mock-title">マトリクスの一部</div>
+  <table class="t" style="font-size:.82em">
+    <thead><tr><th>スタッフ</th><th>1日</th><th>2日</th><th>3日</th><th>4日</th><th>5日</th></tr></thead>
+    <tbody>
+      <tr><td>ふさちゃん</td><td>○／○</td><td>○／○</td><td>×／×</td><td>○／○</td><td>○／○</td></tr>
+      <tr><td>みきちゃん</td><td>○／×</td><td>△／○</td><td>○／○</td><td>—／—</td><td>○／△</td></tr>
+      <tr><td>ちなちゃん</td><td>×／×</td><td>○／○</td><td>○／○</td><td>○／○</td><td>○／○</td></tr>
+    </tbody>
+  </table>
+  <div style="font-size:.85em;color:#475569;margin-top:4px">表記：昼／夜　／　○=出勤可　×=休み　△=調整可　—=未提出</div>
+</div>
+
+<div class="tip">
+このタブは「全スタッフの希望をまとめて見直したい」「集計の根拠を確認したい」時に便利です。
+</div>
+
+<h2 class="sec" id="staff">6. スタッフ管理</h2>
+
+<h3>6-1. スタッフ一覧</h3>
+<p>登録されているスタッフが一覧表示されます。種別ごとに色分け。</p>
+
+<table class="t">
+  <thead><tr><th>種別</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td>固定</td><td>シフトが固定されている社員・常勤</td></tr>
+    <tr><td>パート</td><td>パートタイマー</td></tr>
+    <tr><td>アルバイト</td><td>アルバイト</td></tr>
+    <tr><td>フリー</td><td>希望次第のフリー枠</td></tr>
+  </tbody>
+</table>
+
+<h3>6-2. 新規追加</h3>
+<ol>
+  <li>「+ スタッフを追加」ボタン</li>
+  <li>名前（表示名）／ID（英字、ログイン用）／初期パスワード／種別を入力</li>
+  <li>「追加」で確定</li>
+</ol>
+
+<h3>6-3. 編集</h3>
+<p>各スタッフ行の「編集」ボタンから名前・種別・パスワードを変更可能。</p>
+
+<h3>6-4. 削除（アーカイブ）</h3>
+<div class="warn">
+削除ボタンは<strong>完全削除ではなく退職フラグ</strong>です。過去のシフト・希望データは保存されます。集計や履歴で必要なので、完全削除しない設計です。
+</div>
+
+<h3>6-5. 退職者表示切替</h3>
+<p>上部のラジオで「現役のみ」「全員（退職者含む）」を切り替えられます。退職者を再雇用する場合は「全員」表示にして編集→アーカイブ解除。</p>
+
+<h2 class="sec" id="settings">7. 設定（締切設定含む）</h2>
+
+<h3>7-1. 定休日の曜日設定</h3>
+<p>毎週決まった休業日（デフォルト：火・水）。チェックを切り替えるとカレンダーに反映されます。</p>
+
+<h3>7-2. 特別休日・臨時休業</h3>
+<p>特定日付の休業（祝日振替、棚卸し、店長旅行等）。「+ 日付追加」で登録。カレンダーで該当日に「臨」マークが表示されます。</p>
+
+<h3>7-3. 定休日の営業例外日</h3>
+<p>本来定休日だが営業する日（特別営業）。逆方向の例外設定。</p>
+
+<h3>7-4. 管理者マスターパスワード</h3>
+<p>全スタッフアカウントに使える特別パスワード（前述）。</p>
+
+<h3>7-5. シフト希望締切設定（重要・新機能）</h3>
+
+<div class="ok">
+スタッフが何月分のシフト希望を出せるかをコントロールします。<strong>デフォルトは前月の20日</strong>。月別・スタッフ別に上書き可能。
+</div>
+
+<h4>階層構造</h4>
+<p>締切は次の順に判定されます（上ほど優先）：</p>
+<ol>
+  <li><strong>個人別の上書き</strong>（特定スタッフだけ別の締切）</li>
+  <li><strong>月別の上書き</strong>（その月全体の締切を変更）</li>
+  <li><strong>デフォルト</strong>（前月の20日 23:59）</li>
+</ol>
+
+<h4>UIサンプル</h4>
+<div class="mock">
+  <div class="mock-title">月別の締切一覧</div>
+  <div class="deadline-row">
+    <strong>2026年 7月</strong>
+    <span style="color:#475569;font-size:.88em">デフォルト: 6/20</span>
+    <input type="date" value="2026-06-20" style="padding:4px;border:1px solid #cbd5e1;border-radius:4px;font-size:.9em">
+    <span class="btn btn-blue">保存</span>
+  </div>
+  <div class="deadline-row" style="background:#fef9c3">
+    <strong>2026年 8月</strong>
+    <span style="color:#854d0e;font-size:.88em">上書き中: 7/25</span>
+    <input type="date" value="2026-07-25" style="padding:4px;border:1px solid #cbd5e1;border-radius:4px;font-size:.9em">
+    <span style="display:flex;gap:4px"><span class="btn btn-blue">保存</span><span class="btn btn-outline">↺ リセット</span></span>
+  </div>
+  <div style="text-align:right;margin-top:6px">
+    <span class="btn btn-purple">👤 個別</span>
+  </div>
+</div>
+
+<h4>個別調整（月別→特定スタッフ）</h4>
+<p>「👤 個別」ボタンを押すと、その月のスタッフ別締切パネルが展開します。</p>
+<div class="mock">
+  <div class="mock-title">個別調整パネル（2026年7月）</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <strong style="color:#7c3aed">スタッフ別の締切調整</strong>
+    <span class="btn btn-outline">✕ 閉じる</span>
+  </div>
+  <div class="deadline-row">
+    <span>ふさちゃん</span>
+    <span style="color:#475569;font-size:.88em">標準: 6/20</span>
+    <input type="date" value="2026-06-20" style="padding:4px;border:1px solid #cbd5e1;border-radius:4px;font-size:.9em">
+    <span class="btn btn-blue">保存</span>
+  </div>
+  <div class="deadline-row" style="background:#fef9c3">
+    <span>みきちゃん</span>
+    <span style="color:#854d0e;font-size:.88em">上書き: 6/25</span>
+    <input type="date" value="2026-06-25" style="padding:4px;border:1px solid #cbd5e1;border-radius:4px;font-size:.9em">
+    <span style="display:flex;gap:4px"><span class="btn btn-blue">保存</span><span class="btn btn-outline">↺ リセット</span></span>
+  </div>
+</div>
+
+<div class="tip">
+<strong>「変更なし」は保存しても上書きが増えません。</strong>うっかり開いて「保存」を押しても何も書き込まれない設計です。値を変えた時だけ上書きとして記録されます。
+</div>
+
+<h4>使用例</h4>
+<ul>
+  <li>連休・繁忙月に「全員の締切を5日延ばす」→ 月別の日付ピッカーで変更→保存</li>
+  <li>特定スタッフだけ「旅行から戻った日まで延長」→ 個別パネルでその人だけ変更</li>
+  <li>普段通りに戻したい → 「↺ リセット」</li>
+</ul>
+
+<h2 class="sec" id="template">8. テンプレート</h2>
+
+<p>シフトの土台になる「A週」と「B週」を設計します。1・3・5週目がA、2・4週目がB。</p>
+
+<div class="mock">
+  <div class="mock-title">テンプレートエディタ</div>
+  <table class="t" style="font-size:.85em">
+    <thead><tr><th></th><th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th></tr></thead>
+    <tbody>
+      <tr><td>A 週 昼</td><td>ふさ／まー</td><td>みき／ちな</td><td>定休</td><td>定休</td><td>ふさ／るい</td><td>みき／ちな</td><td>ふさ／まー</td></tr>
+      <tr><td>A 週 夜</td><td>ひろせ／るい</td><td>ぶん／ちな</td><td>定休</td><td>定休</td><td>ひろせ／ぶん</td><td>るい／みき</td><td>ひろせ／ちな</td></tr>
+      <tr><td>B 週 昼</td><td>みき／ちな</td><td>ふさ／まー</td><td>定休</td><td>定休</td><td>みき／るい</td><td>ふさ／まー</td><td>みき／ちな</td></tr>
+      <tr><td>B 週 夜</td><td>ぶん／ちな</td><td>ひろせ／るい</td><td>定休</td><td>定休</td><td>ぶん／ひろせ</td><td>みき／るい</td><td>ぶん／ちな</td></tr>
+    </tbody>
+  </table>
+  <div style="text-align:right;margin-top:8px">
+    <span class="btn btn-green">📅 今月に反映</span>
+  </div>
+</div>
+
+<ul>
+  <li>各曜日の昼／夜にスタッフを設定（複数可）</li>
+  <li>「📅 今月に反映」で表示月の下書きをテンプレートから再生成</li>
+  <li>定休日は自動で「定休」表示になる</li>
+</ul>
+
+<h2 class="sec" id="stats">9. 統計</h2>
+
+<p>シフトの偏りや連勤数を可視化します。<strong>1コマ = 4時間</strong>で計算。</p>
+
+<h3>9-1. 集計対象切替</h3>
+<div class="mock">
+  <div class="mock-title">対象選択</div>
+  <span class="btn btn-red">下書き（編集中）</span>
+  <span class="btn btn-outline">公開済み</span>
+  <span style="color:#475569;font-size:.9em;margin-left:10px">どちらを集計するか選択。シフト管理を変更すると即座に再計算されます</span>
+</div>
+
+<h3>9-2. サマリーカード</h3>
+<div class="mock">
+  <div class="mock-title">月のサマリー（2026年 7月 例）</div>
+  <table class="t" style="font-size:.88em">
+    <tr><td>営業日数</td><td>22日</td></tr>
+    <tr><td>昼コマ合計</td><td>44コマ</td></tr>
+    <tr><td>夜コマ合計</td><td>44コマ</td></tr>
+    <tr><td>合計人時</td><td>352時間</td></tr>
+    <tr><td>出勤スタッフ数</td><td>7名</td></tr>
+  </table>
+</div>
+
+<h3>9-3. スタッフ別 稼働</h3>
+<div class="mock">
+  <div class="mock-title">スタッフ別表</div>
+  <table class="t" style="font-size:.88em">
+    <thead><tr><th>スタッフ</th><th>昼</th><th>夜</th><th>合計時間</th><th>占有率</th><th>最長連勤</th></tr></thead>
+    <tbody>
+      <tr><td>ふさちゃん</td><td>18コマ</td><td>0コマ</td><td>72h</td><td>20.5%</td><td>4日</td></tr>
+      <tr><td>みきちゃん</td><td>12コマ</td><td>6コマ</td><td>72h</td><td>20.5%</td><td>3日 ⚠</td></tr>
+      <tr><td>ひろせくん</td><td>0コマ</td><td>20コマ</td><td>80h</td><td>22.7%</td><td>5日 ⚠⚠</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="warn">
+<strong>連勤警告</strong>：3連勤以上は「⚠」、5連勤以上は「⚠⚠」が表示されます。定休日はカウントされません（営業日のみで連続判定）。
+</div>
+
+<h2 class="sec" id="publish">10. 公開フロー（運用ガイド）</h2>
+
+<h3>ベストプラクティス</h3>
+<ol>
+  <li><strong>テンプレートで下書き作成</strong>：テンプレートタブ→「今月に反映」</li>
+  <li><strong>シフト管理で調整</strong>：編集モードに入る→候補から選んで確定／外す</li>
+  <li><strong>統計で偏りチェック</strong>：連勤・占有率を確認</li>
+  <li><strong>公開プレビュー</strong>：スタッフ視点で内容確認</li>
+  <li><strong>公開する</strong>：確認ダイアログでOK</li>
+  <li><strong>スタッフへ通知</strong>：LINE等で「2026年7月のシフトが公開されました」</li>
+</ol>
+
+<h3>後で修正が必要になったら</h3>
+<p>編集モード→修正→もう一度「公開する」で再公開（上書き）。スタッフ画面にも自動反映されます。</p>
+
+<h3>未公開に戻すケース</h3>
+<ul>
+  <li>大幅な修正が必要で、いったん全部見直したい時</li>
+  <li>誤って公開した時</li>
+</ul>
+<p>「未公開に戻す」を押すと、スタッフ画面では「まだ公開されていません」表示に戻りますが、下書きは残ったままです。</p>
+
+<h2 class="sec" id="sync">11. リアルタイム同期と編集ロック</h2>
+
+<h3>11-1. リアルタイム同期</h3>
+<p>同じ画面を複数の端末で開いていても、Firebase 経由で自動同期されます。誰かがシフトを変更すると、他の端末にも即座に反映され、画面下にトースト通知が出ます。</p>
+
+<h3>11-2. 編集ロック（排他制御）</h3>
+<div class="mock">
+  <div class="mock-title">他の管理者が編集中</div>
+  <div style="padding:10px;background:#fee2e2;border:1px solid #fca5a5;border-radius:6px;color:#991b1b">
+    <strong>⚠ 管理者B が編集中です</strong><br>
+    <span style="font-size:.88em">最終操作: 12秒前　[引き継ぐ] [閉じる]</span>
+  </div>
+</div>
+<ul>
+  <li>1人が編集モードに入ると、他の管理者は閲覧モードになる</li>
+  <li>30秒以上反応がない場合、「引き継ぐ」ボタンで強制的に編集権を奪取できる</li>
+  <li>編集中のタブを閉じる（ブラウザ閉じ）と自動的にロック解放</li>
+</ul>
+
+<h2 class="sec" id="security">12. セキュリティ・パスワード</h2>
+
+<h3>12-1. パスワードの保存</h3>
+<p>パスワードは<strong>SHA-256 + 個別ソルト</strong>でハッシュ化されてFirebaseに保存されます。平文パスワードは保存されません。</p>
+
+<h3>12-2. Firebase認証</h3>
+<p>すべての読み書きは Anonymous Auth トークンが必要です。Firebase Rules で <code>auth != null</code> を要求しているため、未認証アクセスは拒否されます。</p>
+
+<h3>12-3. 環境分離</h3>
+<table class="t">
+  <thead><tr><th>環境</th><th>URL</th><th>Firebase Namespace</th></tr></thead>
+  <tbody>
+    <tr><td>本番</td><td>gyozapekin.com/shift/</td><td><code>/pekin/db/</code></td></tr>
+    <tr><td>Dev</td><td>gyozapekin.com/gyozapekin2.github.io/shift/</td><td><code>/pekin/db_dev/</code></td></tr>
+  </tbody>
+</table>
+<div class="tip">
+本番とDevはFirebaseのネームスペースで完全に分離されています。Devでのテストが本番に影響することはありません。
+</div>
+
+<h2 class="sec" id="trouble">13. トラブルシュート</h2>
+
+<dl class="faq">
+  <dt>再同期してもデータが古い</dt>
+  <dd>一度ログアウト→ログイン。それでも改善しない場合、ブラウザのキャッシュを Ctrl+Shift+R で強制リロード。</dd>
+
+  <dt>公開ボタンを押しても反映されない</dt>
+  <dd>F12 でブラウザの開発者ツールを開き、Console タブで Firebase エラーが出ていないか確認。「permission denied」が出る場合は Firebase Rules またはAuth設定の問題。</dd>
+
+  <dt>スタッフが「受付終了」で希望を出せない</dt>
+  <dd>設定→「シフト希望締切設定」で該当月の締切を延長。または個別パネルでそのスタッフだけ延長。</dd>
+
+  <dt>編集モードに入れない</dt>
+  <dd>他の管理者がロック中。30秒以上経過していれば「引き継ぐ」ボタンが出ます。それでも入れない場合、相手の端末でブラウザを閉じてもらってください。</dd>
+
+  <dt>スタッフのパスワードを忘れたと言われた</dt>
+  <dd>スタッフ管理タブで該当スタッフを「編集」→パスワードを新規入力。または、マスターパスワード機能を使えば管理者側でリセット不要に。</dd>
+
+  <dt>テンプレート反映を間違えて押した</dt>
+  <dd>編集モードに入って「↶ 戻る」で取消。または再度テンプレートを修正→「今月に反映」で正しい状態を再生成。</dd>
+
+  <dt>公開済みのシフトを修正したい</dt>
+  <dd>編集モード→修正→もう一度「公開する」で上書き再公開。スタッフ画面に即時反映されます。</dd>
+
+  <dt>Dev環境で操作した内容が本番に出てしまった</dt>
+  <dd>原理的に起こりえません。Firebaseネームスペースが分離されています。もし本当に起きていたら、URL を再確認してください（gyozapekin2.github.io が含まれているか）。</dd>
+</dl>
+
+</div>
+
+<a href="#" class="toptop">↑ トップへ</a>
+
+</body>
+</html>
