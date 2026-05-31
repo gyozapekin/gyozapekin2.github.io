@@ -488,7 +488,7 @@ body{font-family:'Helvetica Neue','Hiragino Sans','Yu Gothic UI',Arial,sans-seri
   <h3 style="font-size:.95em;margin:18px 0 8px;color:#475569;font-weight:700">📅 シフト希望締切設定</h3>
   <p style="font-size:.78em;color:#64748b;margin:0 0 8px">
     各月のシフト希望提出締切を管理します。デフォルトは「前月の20日」です。<br>
-    特定月のみ締切を変更したい場合は日付を入力して「保存」、戻すには「リセット」。
+    特定月の締切を変更: 日付を入力して「保存」。元の20日に戻す: 「↺ リセット」（上書き設定済みの月のみ有効）。
   </p>
   <div id="deadlineWrap"></div>
 </div>
@@ -1902,7 +1902,7 @@ function renderDeadlinePanel(){
       <td style="padding:6px 8px;font-size:.85em">${past?'<span style="color:#991b1b;font-weight:600">受付終了</span>':'<span style="color:#065f46;font-weight:600">受付中</span>'}</td>
       <td style="padding:6px 8px;text-align:center">
         <button class="cbtn cbtn-blue" style="padding:2px 10px;font-size:.78em" onclick="saveDeadline('${ym}')">保存</button>
-        ${isOverride?`<button class="cbtn cbtn-outline" style="padding:2px 8px;font-size:.78em;margin-left:4px" onclick="resetDeadline('${ym}')">リセット</button>`:''}
+        <button class="cbtn cbtn-outline" style="padding:2px 8px;font-size:.78em;margin-left:4px${isOverride?'':';opacity:.4;cursor:not-allowed'}" onclick="resetDeadline('${ym}')" ${isOverride?'':'disabled title="現在デフォルト（上書きなし）"'}>↺ リセット</button>
       </td>
     </tr>`;
   }
