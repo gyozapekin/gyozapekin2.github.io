@@ -97,15 +97,14 @@ footer{margin-top:48px;padding:20px;background:var(--bg);border-radius:10px;text
     <tr><th>Ver.</th><th>日付</th><th>主な変更</th></tr>
     <tr><td>1.0</td><td>2025-09</td><td>初版（ローカル保存版）</td></tr>
     <tr><td>2.0</td><td>2026-04</td><td>UIリニューアル・希望一覧機能追加</td></tr>
-    <tr><td>3.0</td><td>2026-06</td><td>Firebaseクラウド同期、編集ロック（管理者の同時編集排他）、下書き／公開の分離、公開プレビュー、未公開に戻す、昼夜別の希望管理、希望カレンダー（昼夜タブ・フィルター）、統計タブ（時間・割合・連勤）、テンプレートA週／B週、締切設定の月別＆個別調整、スタッフ退職アーカイブ、SHA-256パスワードハッシュ、Anonymous認証</td></tr>
+    <tr><td>3.0</td><td>2026-06</td><td>クラウド同期、編集ロック（管理者の同時編集排他）、下書き／公開の分離、公開プレビュー、未公開に戻す、昼夜別の希望管理、希望カレンダー（昼夜タブ・フィルター）、統計タブ（時間・割合・連勤）、テンプレートA週／B週、締切設定の月別＆個別調整、スタッフ退職アーカイブ、パスワード暗号化保存</td></tr>
   </table>
 </section>
 
 <h2 class="step" id="s1"><span class="num">1</span>ログインする</h2>
 <table class="t">
   <tr><th>項目</th><th>内容</th></tr>
-  <tr><td>本番URL</td><td><span class="kbd">https://gyozapekin.com/shift/</span></td></tr>
-  <tr><td>Dev URL</td><td><span class="kbd">https://gyozapekin.com/gyozapekin2.github.io/shift/admin.html?nocache=N</span>（Nは適当な数字）</td></tr>
+  <tr><td>URL</td><td><span class="kbd">https://gyozapekin.com/shift/</span></td></tr>
   <tr><td>管理者ID</td><td><span class="kbd">admin</span></td></tr>
   <tr><td>パスワード</td><td>初回ログイン後、必ず「アカウント」タブから変更してください</td></tr>
 </table>
@@ -326,14 +325,6 @@ footer{margin-top:48px;padding:20px;background:var(--bg);border-radius:10px;text
 <h3>Firebase認証</h3>
 <p>すべての読み書きは Anonymous Auth トークンが必要です（<code>auth != null</code>）。未認証アクセスは Firebase Rules で拒否されます。</p>
 
-<h3>環境分離</h3>
-<table class="t">
-  <tr><th>環境</th><th>URL</th><th>Firebase Namespace</th></tr>
-  <tr><td>本番</td><td>gyozapekin.com/shift/</td><td><code>/pekin/db/</code></td></tr>
-  <tr><td>Dev</td><td>gyozapekin.com/gyozapekin2.github.io/shift/</td><td><code>/pekin/db_dev/</code></td></tr>
-</table>
-<div class="tip">本番とDevはFirebaseのネームスペースで完全に分離されています。Devでのテストが本番に影響することはありません。</div>
-
 <div class="faq">
 <h2>よくある質問</h2>
 <dl>
@@ -358,8 +349,6 @@ footer{margin-top:48px;padding:20px;background:var(--bg);border-radius:10px;text
   <dt>公開済みのシフトを修正したい</dt>
   <dd>編集モード→修正→もう一度「公開する」で上書き再公開。スタッフ画面に即時反映されます。</dd>
 
-  <dt>Dev環境で操作した内容が本番に出てしまった</dt>
-  <dd>原理的に起こりえません。Firebaseネームスペースが分離されています。もし本当に起きていたら、URL を再確認してください（gyozapekin2.github.io が含まれているか）。</dd>
 </dl>
 </div>
 
