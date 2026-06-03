@@ -10,15 +10,21 @@
 <meta name="description" content="{{ page.description | default: site.description }}">
 <meta name="author" content="{{ site.title }}">
 
+<!-- 正規URL（重複コンテンツ対策） -->
+<link rel="canonical" href="{{ page.url | absolute_url }}">
+
 <!-- OGP / Twitter Card -->
 <meta property="og:site_name" content="{{ site.title }}">
-<meta property="og:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}">
+<meta property="og:title" content="{% if page.title %}{{ page.title }} | {{ site.title }}{% else %}{{ site.title }}{% endif %}">
 <meta property="og:description" content="{{ page.description | default: site.description }}">
 <meta property="og:type" content="{% if page.layout == 'post' %}article{% else %}website{% endif %}">
-<meta property="og:url" content="{{ site.url }}{{ page.url }}">
-<meta property="og:image" content="{% if page.image %}{{ site.url }}{{ page.image }}{% else %}{{ site.url }}/images/ogp-default.jpg{% endif %}">
+<meta property="og:url" content="{{ page.url | absolute_url }}">
+<meta property="og:image" content="{% if page.image %}{{ page.image | absolute_url }}{% else %}{{ '/images/ogp-default.jpg' | absolute_url }}{% endif %}">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{% if page.title %}{{ page.title }} | {{ site.title }}{% else %}{{ site.title }}{% endif %}">
+<meta name="twitter:description" content="{{ page.description | default: site.description }}">
+<meta name="twitter:image" content="{% if page.image %}{{ page.image | absolute_url }}{% else %}{{ '/images/ogp-default.jpg' | absolute_url }}{% endif %}">
 
 <!-- 構造化データ: LocalBusiness（飲食店） -->
 <script type="application/ld+json">
@@ -26,9 +32,11 @@
   "@context": "https://schema.org",
   "@type": "Restaurant",
   "name": "{{ site.restaurant.name }}",
-  "url": "{{ site.url }}",
+  "url": "{{ '/' | absolute_url }}",
+  "image": "{{ '/images/ogp-default.jpg' | absolute_url }}",
   "telephone": "{{ site.restaurant.phone }}",
   "email": "{{ site.restaurant.email }}",
+  "priceRange": "¥1,000-¥3,000",
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "宮之阪 1-19-2",
@@ -37,7 +45,24 @@
     "postalCode": "573-0022",
     "addressCountry": "JP"
   },
-  "servesCuisine": ["中華料理", "餃子", "海鮮餃子"]
+  "servesCuisine": ["中華料理", "餃子", "海鮮餃子"],
+  "openingHoursSpecification": [{
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday", "Thursday", "Friday", "Saturday", "Sunday"],
+    "opens": "11:30",
+    "closes": "22:00"
+  }],
+  "hasMenu": "{{ '/menu.html' | absolute_url }}",
+  "sameAs": [
+    "{{ site.social.x }}",
+    "{{ site.social.instagram }}",
+    "{{ site.social.youtube }}"
+  ],
+  "potentialAction": {
+    "@type": "OrderAction",
+    "target": "{{ site.social.ec }}",
+    "deliveryMethod": "http://purl.org/goodrelations/v1#DeliveryModeMail"
+  }
 }
 </script>
 

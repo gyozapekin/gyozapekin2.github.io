@@ -7,99 +7,99 @@ permalink: /sitemap.xml
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
     <!-- 日本語版トップ -->
     <url>
-        <loc>https://gyozapekin.github.io/</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/</loc>
         <lastmod>{{ site.time | date: "%Y-%m-%d" }}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/index.html"/>
-        <xhtml:link rel="alternate" hreflang="x-default" href="https://gyozapekin.github.io/"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/index.html"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="{{ site.url }}{{ site.baseurl }}/"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/menu.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/menu.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.9</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/menu.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/menu.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/menu.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/menu.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/about.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/about.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/about.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/about.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/about.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/about.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/order.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/order.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/blog.html</loc>
-        <lastmod>2026-04-18</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://gyozapekin.github.io/news/</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/news/</loc>
         <lastmod>{{ site.time | date: "%Y-%m-%d" }}</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/gallery.html</loc>
-        <lastmod>2026-04-18</lastmod>
+        <loc>{{ site.url }}{{ site.baseurl }}/gallery.html</loc>
+        <lastmod>2026-06-04</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/howto.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/gallery/shorts.html</loc>
+        <lastmod>2026-06-04</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>{{ site.url }}{{ site.baseurl }}/howto.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.6</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/howto.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/howto.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/howto.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/howto.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/contact.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/contact.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.5</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/contact.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/contact.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/contact.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/contact.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/privacy.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/privacy.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.3</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/privacy.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/privacy.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/privacy.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/privacy.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/gyozalink.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/gyozalink.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/gyozalink.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/gyozalinkeng.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/gyozalink.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/gyozalinkeng.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/hirakata.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/hirakata.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/hirakata.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/hirakataeng.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/hirakata.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/hirakataeng.html"/>
     </url>
 
     <!-- ブログ記事（Jekyllが自動生成） -->
     {% for post in site.posts %}
     <url>
-        <loc>{{ site.url }}{{ post.url }}</loc>
+        <loc>{{ post.url | absolute_url }}</loc>
         <lastmod>{{ post.date | date: "%Y-%m-%d" }}</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
@@ -108,51 +108,51 @@ permalink: /sitemap.xml
 
     <!-- 英語版 /en/ -->
     <url>
-        <loc>https://gyozapekin.github.io/en/index.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/en/index.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/index.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/index.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/en/menu.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/en/menu.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/menu.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/menu.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/menu.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/menu.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/en/about.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/en/about.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/about.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/about.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/about.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/about.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/en/howto.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/en/howto.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.6</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/howto.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/howto.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/howto.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/howto.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/en/contact.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/en/contact.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.5</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/contact.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/contact.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/contact.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/contact.html"/>
     </url>
     <url>
-        <loc>https://gyozapekin.github.io/en/privacy.html</loc>
+        <loc>{{ site.url }}{{ site.baseurl }}/en/privacy.html</loc>
         <lastmod>2026-04-18</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.3</priority>
-        <xhtml:link rel="alternate" hreflang="ja" href="https://gyozapekin.github.io/privacy.html"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://gyozapekin.github.io/en/privacy.html"/>
+        <xhtml:link rel="alternate" hreflang="ja" href="{{ site.url }}{{ site.baseurl }}/privacy.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/privacy.html"/>
     </url>
 </urlset>
