@@ -24,19 +24,9 @@ description: "餃子愛あふれるYouTube『餃子王ちゃんねる』さん�
 
 北京の餃子のおいしさを支えているのが、産地にこだわった三種の海鮮、「海鮮トリオ」です。**北海道産のホタテ**、**明石産の活けだこ**、そして **丸ごと1匹のえび**。それぞれの素材の旨みと甘みが、ひと口にぎゅっと凝縮されています。
 
-<figure style="margin:1.5em 0;text-align:center;">
-  <img src="{{ '/seafood-trio.jpg' | relative_url }}" alt="海鮮トリオ 北海道産ホタテ・明石産活けだこ・丸ごと1匹のえび" style="max-width:540px;width:100%;height:auto;border-radius:10px;">
-  <figcaption style="font-size:0.85rem;color:#666;margin-top:8px;">北海道産ホタテ・明石産活けだこ・丸ごと1匹のえび</figcaption>
-</figure>
-
 ## 特大の「海王餃子」
 
 海鮮トリオをたっぷり詰め込んだ、北京の名物が特大の **「海王餃子」**。普通の餃子およそ10個分という大きさで、中には超巨大なブラックタイガーがまるごと1匹。インパクトも食べごたえも満点の、一度は味わっていただきたい一皿です。
-
-<figure style="margin:1.5em 0;text-align:center;">
-  <img src="{{ '/kaiou-gyoza.jpg' | relative_url }}" alt="特大の海王餃子" style="max-width:540px;width:100%;height:auto;border-radius:10px;">
-  <figcaption style="font-size:0.85rem;color:#666;margin-top:8px;">普通の餃子およそ10個分、中にはブラックタイガーがまるごと1匹の海王餃子</figcaption>
-</figure>
 
 ## 名物の焼き飯も外せません
 
