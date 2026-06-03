@@ -42,21 +42,21 @@
 </script>
 
 <!-- スタイル -->
-<link rel="stylesheet" href="/css/news.css">
+<link rel="stylesheet" href="{{ '/css/news.css' | relative_url }}">
 
 <!-- Favicon -->
-<link rel="icon" type="image/png" href="/images/favicon.png">
+<link rel="icon" type="image/png" href="{{ '/images/favicon.png' | relative_url }}">
 
 <!-- RSSフィード -->
-<link rel="alternate" type="application/rss+xml" title="{{ site.title }} お知らせ" href="/feed.xml">
+<link rel="alternate" type="application/rss+xml" title="{{ site.title }} お知らせ" href="{{ '/feed.xml' | relative_url }}">
 </head>
 
 <body>
 
 <!-- ヘッダー（既存サイトと統一） -->
 <header class="site-header">
-  <a href="/" class="logo-link" aria-label="海鮮餃子 北京 ホーム">
-    <img src="/images/logo-banner.jpg" alt="海鮮餃子 北京" class="logo-banner"
+  <a href="{{ '/' | relative_url }}" class="logo-link" aria-label="海鮮餃子 北京 ホーム">
+    <img src="{{ '/images/logo-banner.jpg' | relative_url }}" alt="海鮮餃子 北京" class="logo-banner"
          onerror="this.style.display='none'; this.parentElement.innerHTML='<h1 style=\'margin:0;color:#c0392b;font-size:2rem;\'>海鮮餃子 北京</h1>';">
   </a>
 </header>
@@ -64,15 +64,15 @@
 <!-- メインナビゲーション -->
 <nav class="main-nav" aria-label="メインメニュー">
   <ul>
-    <li><a href="/">ホーム</a></li>
-    <li><a href="/order.html">ネットショップ</a></li>
-    <li><a href="/menu.html">メニュー</a></li>
-    <li><a href="/about.html">店舗紹介</a></li>
-    <li><a href="/howto.html">餃子の焼き方</a></li>
-    <li><a href="/news/" class="current">お知らせ</a></li>
-    <li><a href="/gallery.html">ギャラリー</a></li>
-    <li><a href="/contact.html">お問合わせ</a></li>
-    <li><a href="/en/" class="lang-switch">English</a></li>
+    <li><a href="{{ '/' | relative_url }}">ホーム</a></li>
+    <li><a href="{{ '/order.html' | relative_url }}">ネットショップ</a></li>
+    <li><a href="{{ '/menu.html' | relative_url }}">メニュー</a></li>
+    <li><a href="{{ '/about.html' | relative_url }}">店舗紹介</a></li>
+    <li><a href="{{ '/howto.html' | relative_url }}">餃子の焼き方</a></li>
+    <li><a href="{{ '/news/' | relative_url }}" class="current">お知らせ</a></li>
+    <li><a href="{{ '/gallery.html' | relative_url }}">ギャラリー</a></li>
+    <li><a href="{{ '/contact.html' | relative_url }}">お問合わせ</a></li>
+    <li><a href="{{ '/en/' | relative_url }}" class="lang-switch">English</a></li>
   </ul>
 </nav>
 
@@ -84,11 +84,11 @@
 <!-- フッター -->
 <footer class="site-footer">
   <nav class="footer-nav">
-    <a href="/">ホーム</a>
-    <a href="/menu.html">メニュー</a>
-    <a href="/about.html">店舗紹介</a>
-    <a href="/contact.html">お問合わせ</a>
-    <a href="/news/">お知らせ</a>
+    <a href="{{ '/' | relative_url }}">ホーム</a>
+    <a href="{{ '/menu.html' | relative_url }}">メニュー</a>
+    <a href="{{ '/about.html' | relative_url }}">店舗紹介</a>
+    <a href="{{ '/contact.html' | relative_url }}">お問合わせ</a>
+    <a href="{{ '/news/' | relative_url }}">お知らせ</a>
   </nav>
   <p class="copyright">&copy; 海鮮餃子 北京 All Rights Reserved.</p>
   <p class="address">{{ site.restaurant.address }}　電話: <a href="tel:{{ site.restaurant.phone }}">{{ site.restaurant.phone }}</a></p>

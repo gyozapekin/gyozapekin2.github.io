@@ -5,9 +5,9 @@ layout: default
 
   <!-- パンくずリスト -->
   <nav class="breadcrumb" aria-label="パンくず">
-    <a href="/">ホーム</a>
+    <a href="{{ '/' | relative_url }}">ホーム</a>
     <span class="sep">&gt;</span>
-    <a href="/news/">お知らせ</a>
+    <a href="{{ '/news/' | relative_url }}">お知らせ</a>
     <span class="sep">&gt;</span>
     <span>{{ page.title }}</span>
   </nav>
@@ -64,13 +64,13 @@ layout: default
   <!-- 前後の記事 -->
   <nav class="post-navigation" aria-label="前後の記事">
     {% if page.previous %}
-      <a href="{{ page.previous.url }}" class="prev">
+      <a href="{{ page.previous.url | relative_url }}" class="prev">
         <span class="label">前の記事</span>
         <span class="title">{{ page.previous.title }}</span>
       </a>
     {% endif %}
     {% if page.next %}
-      <a href="{{ page.next.url }}" class="next">
+      <a href="{{ page.next.url | relative_url }}" class="next">
         <span class="label">次の記事</span>
         <span class="title">{{ page.next.title }}</span>
       </a>
@@ -79,7 +79,7 @@ layout: default
 
   <!-- 一覧に戻る -->
   <div class="back-to-list">
-    <a href="/news/">&laquo; お知らせ一覧へ戻る</a>
+    <a href="{{ '/news/' | relative_url }}">&laquo; お知らせ一覧へ戻る</a>
   </div>
 
 </article>
