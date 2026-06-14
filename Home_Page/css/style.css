@@ -32,11 +32,11 @@ body {
 .site-wrapper {
   max-width: 860px;
   margin: 0 auto;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.40);
   box-shadow: 0 0 28px rgba(0,0,0,0.55);
   min-height: 100vh;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px) saturate(1.05);
+  -webkit-backdrop-filter: blur(3px) saturate(1.05);
 }
 
 /* ヘッダー（ロゴバナー） */
@@ -45,7 +45,7 @@ body {
 .site-header img.logo { width: 100%; max-width: 620px; height: auto; display: block; margin: 0 auto; }
 
 /* ナビゲーション */
-.site-nav { background: #ffffff; border-bottom: 2px solid #ddd; border-top: 1px solid #ccc; }
+.site-nav { background: rgba(255,255,255,0.82); border-bottom: 2px solid #ddd; border-top: 1px solid #ccc; }
 .site-nav ul { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; margin: 0; padding: 0; }
 .site-nav ul li a {
   display: block;
