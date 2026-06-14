@@ -331,3 +331,22 @@ a:hover { text-decoration: underline; }
 .accordion-item { border-radius: 12px; }
 /* 英語バッジ：基準の丸みをほんの少し強調 */
 .lang-badge { border-radius: 10px; }
+
+/* =====================================================
+   白パネルも透過して餃子を見せる（2026-06-14）
+   ===================================================== */
+/* メニューの料理表：白を半透明にして餃子を透かす（文字は読める範囲で） */
+.menu-table { background: transparent; }
+.menu-table th { background: rgba(245,240,228,0.50); }
+.menu-table td { background: rgba(255,255,255,0.30); }
+.menu-table tr:nth-child(even) td { background: rgba(255,255,255,0.44); }
+/* 店舗情報表・問い合わせ枠も同様に少し透過 */
+.store-info-table { background: transparent; }
+.store-info-table th { background: rgba(249,247,240,0.55); }
+.store-info-table td { background: rgba(255,255,255,0.32); }
+.contact-info { background: rgba(249,247,240,0.55); }
+/* メニュー/ギャラリーのドロップダウンの白も少しだけ透過＋すりガラス */
+.site-nav li.has-dropdown .dropdown {
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
