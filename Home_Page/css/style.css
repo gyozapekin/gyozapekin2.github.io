@@ -302,3 +302,32 @@ a:hover { text-decoration: underline; }
 @media (max-width: 640px) {
   .site-nav li.has-dropdown .dropdown { position: static; box-shadow: none; border-top: 1px solid #eee; min-width: 0; }
 }
+
+/* =====================================================
+   角丸・柔らかみ調整（2026-06-14）
+   英語バッジの丸みに合わせ、ナビ・ボタン・枠の角を柔らかく
+   ===================================================== */
+/* ナビ項目：ホバー/選択中ハイライトを角丸ピル風に */
+.site-nav ul li a { border-radius: 12px; margin: 4px 3px; }
+/* ドロップダウン：箱の角を丸く */
+.site-nav li.has-dropdown .dropdown { border-radius: 12px; overflow: hidden; }
+/* 言語/旧言語ボタン：柔らかく */
+.site-nav li.lang-dropdown > a, .site-nav ul li a.lang-switch { border-radius: 12px; }
+/* 各種ボタン：英語バッジに合わせて丸く */
+.btn-order { border-radius: 16px; }
+.contact-form button[type="submit"] { border-radius: 16px; }
+/* メニューのカテゴリ見出し（黄色帯）：角を取る */
+.menu-category h3 { border-radius: 10px; }
+/* 表：外枠の角を丸める（横罫線のみのすっきり表示） */
+.menu-table, .store-info-table {
+  border-collapse: separate; border-spacing: 0;
+  border: 1px solid #e3ddd0; border-radius: 14px; overflow: hidden;
+}
+.menu-table th, .menu-table td,
+.store-info-table th, .store-info-table td { border: none; border-bottom: 1px solid #eee; }
+.menu-table tr:last-child td, .store-info-table tr:last-child td { border-bottom: none; }
+/* 情報ボックス・アコーディオン枠を柔らかく */
+.contact-info { border-radius: 14px; }
+.accordion-item { border-radius: 12px; }
+/* 英語バッジ：基準の丸みをほんの少し強調 */
+.lang-badge { border-radius: 10px; }
