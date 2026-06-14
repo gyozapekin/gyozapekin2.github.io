@@ -1,4 +1,2 @@
 User-agent: *
-Disallow: /shift/
-
-Sitemap: https://gyozapekin.com/sitemap.xml
+Disallow: /
