@@ -52,6 +52,15 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
 .wbtn.sel{background:var(--red2);color:#fff;border-color:var(--red2)}
 .note{font-size:.72em;color:#8a7a66;margin-top:6px;line-height:1.5}
 .mode{font-size:.78em;font-weight:700;color:#8a5a00;background:#fff7e0;border:1px solid #eadfa8;border-radius:8px;padding:7px 10px;margin-top:8px;display:none}
+.mode.closed{color:#fff;background:var(--red2);border-color:var(--red);font-size:.9em;text-align:center}
+.dbtn{width:46px;height:46px;font-size:1.3em;border-radius:10px;background:#f1e8d8;color:#7c2d12;flex:none}
+.wk{display:flex;gap:5px;padding:10px 14px 0}
+.wd{flex:1;text-align:center;border:1.5px solid #e2d9c8;border-radius:9px;padding:6px 2px;background:#faf6f0;cursor:pointer}
+.wd .d{font-size:.72em;font-weight:700;color:#475569}
+.wd .amt{font-size:.66em;font-weight:700;color:#7c2d12;min-height:1.2em;margin-top:2px}
+.wd.sel{border-color:var(--red2);background:#fff;box-shadow:0 0 0 2px rgba(192,57,43,.25)}
+.wd.closed{background:var(--red2);border-color:var(--red)}
+.wd.closed .d,.wd.closed .amt{color:#fff}
 .msg{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1a202c;color:#fff;padding:12px 18px;border-radius:10px;font-size:.9em;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
 .msg.show{opacity:1}
 .err{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:9px 12px;font-size:.82em;color:#991b1b;margin-bottom:10px;display:none}
@@ -80,9 +89,11 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
         <span class="who" id="whoami"></span>
         <button class="btn-sub" id="btnLogout">ログアウト</button>
       </div>
+      <div class="wk" id="weekBar"></div>
       <div class="daterow">
-        <label style="margin:0;flex:none">営業日</label>
+        <button class="dbtn" id="btnPrevDay">&lt;</button>
         <input type="date" id="inDate">
+        <button class="dbtn" id="btnNextDay">&gt;</button>
       </div>
       <div class="body" style="padding-top:6px">
         <div class="mode" id="modeBadge">この日はすでに保存済みです。上書き編集モードで開いています。</div>
@@ -252,8 +263,43 @@ document.querySelectorAll('.wbtn').forEach((b) => {
   };
 });
 
-// 日付切替時: 既存レコードを読み込み(上書き編集モード)
+// 日付切替: カレンダー・前日翌日ボタン・週バーのどれでも移動できる
 $('inDate').onchange = loadDay;
+function shiftDay(n) {
+  const parts = ($('inDate').value || toDateId(new Date())).split('-').map(Number);
+  const d = new Date(parts[0], parts[1] - 1, parts[2] + n);
+  $('inDate').value = toDateId(d);
+  loadDay();
+}
+$('btnPrevDay').onclick = () => shiftDay(-1);
+$('btnNextDay').onclick = () => shiftDay(1);
+
+// 週バー: 選択日の前後2日ずつ。保存済みなら売上、休業日は赤
+async function renderWeekBar() {
+  const bar = $('weekBar'); bar.innerHTML = '';
+  const parts = $('inDate').value.split('-').map(Number);
+  const base = new Date(parts[0], parts[1] - 1, parts[2]);
+  const days = [-2, -1, 0, 1, 2].map((n) => new Date(base.getFullYear(), base.getMonth(), base.getDate() + n));
+  const youbi = ['日', '月', '火', '水', '木', '金', '土'];
+  const cells = days.map((d) => {
+    const id = toDateId(d);
+    const cell = document.createElement('div');
+    cell.className = 'wd' + (id === $('inDate').value ? ' sel' : '');
+    cell.innerHTML = '<div class="d">' + (d.getMonth() + 1) + '/' + d.getDate() + '(' + youbi[d.getDay()] + ')</div><div class="amt"></div>';
+    cell.onclick = () => { $('inDate').value = id; loadDay(); };
+    bar.appendChild(cell);
+    return { id, cell };
+  });
+  await Promise.all(cells.map(async (c) => {
+    try {
+      const s = await getDoc(doc(db, 'bar_pekin_daily', c.id));
+      if (!s.exists()) return;
+      const d = s.data();
+      if (d.isOpen === false) { c.cell.classList.add('closed'); c.cell.querySelector('.amt').textContent = '休業'; }
+      else { c.cell.querySelector('.amt').textContent = (d.salesTotal || 0).toLocaleString(); }
+    } catch (e) { /* 読めない日は空欄のまま */ }
+  }));
+}
 async function loadDay() {
   const id = $('inDate').value; if (!id) return;
   existingCreatedAt = null; existingDoc = null;
@@ -274,12 +320,21 @@ async function loadDay() {
       if (d.memo) $('inMemo').value = d.memo;
       (d.expenses || []).forEach(addExpRow);
       if (d.weather) { weather = d.weather; document.querySelectorAll('.wbtn').forEach((x) => x.classList.toggle('sel', x.dataset.w === weather)); }
+      // 休業日ははっきり赤帯で表示する
+      if (d.isOpen === false) {
+        $('modeBadge').className = 'mode closed';
+        $('modeBadge').textContent = 'この日は休業日として登録済みです';
+      } else {
+        $('modeBadge').className = 'mode';
+        $('modeBadge').textContent = 'この日はすでに保存済みです。上書き編集モードで開いています。';
+      }
       $('modeBadge').style.display = 'block';
     } else {
       $('modeBadge').style.display = 'none';
     }
   } catch (e) { toast('読み込みに失敗しました: ' + (e.code || e.message)); }
   renderBands();
+  renderWeekBar();
 }
 
 // 保存
@@ -310,7 +365,15 @@ async function save(isOpen) {
     } catch (e2) { /* 監査追記失敗は握りつぶさない方針だが入力は止めない */ console.warn('audit', e2); }
     existingDoc = docData;
     existingCreatedAt = docData.createdAt;
+    if (!isOpen) {
+      $('modeBadge').className = 'mode closed';
+      $('modeBadge').textContent = 'この日は休業日として登録済みです';
+    } else {
+      $('modeBadge').className = 'mode';
+      $('modeBadge').textContent = 'この日はすでに保存済みです。上書き編集モードで開いています。';
+    }
     $('modeBadge').style.display = 'block';
+    renderWeekBar();
     toast(isOpen ? id + ' の売上を保存しました' : id + ' を休業日として登録しました');
   } catch (e) { toast('保存に失敗しました: ' + (e.code || e.message));
   } finally { saving = false; }
