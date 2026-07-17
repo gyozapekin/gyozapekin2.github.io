@@ -162,7 +162,8 @@ $('btnLogin').onclick = async () => {
 $('btnLogout').onclick = () => signOut(auth);
 
 onAuthStateChanged(auth, async (u) => {
-  if (!u) { me = null; $('viewMain').style.display = 'none'; $('viewLogin').style.display = 'block'; return; }
+  // 匿名セッション(シフト管理側が同一ドメインで使用)はバーでは無視する。サインアウトもしない
+  if (!u || u.isAnonymous) { me = null; $('viewMain').style.display = 'none'; $('viewLogin').style.display = 'block'; return; }
   try {
     const meSnap = await getDoc(doc(db, 'authorizedBarUsers', u.uid));
     if (!meSnap.exists() || meSnap.data().active !== true) {
