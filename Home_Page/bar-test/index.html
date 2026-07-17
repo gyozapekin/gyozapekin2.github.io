@@ -8,6 +8,8 @@
 <style>
 :root{--red:#a93226;--red2:#c0392b;--dark:#1a0a09;--paper:#fff;--line:#e2e8f0;--warn:#c62828}
 *{box-sizing:border-box;margin:0;padding:0}
+button,input,.band,.total{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+input{-webkit-user-select:auto;user-select:auto}
 body{font-family:'Hiragino Sans','Yu Gothic UI',sans-serif;background:linear-gradient(160deg,#1a0a09,#3d1010 60%,#1a0a09);min-height:100vh;color:#1a202c}
 .wrap{max-width:480px;margin:0 auto;padding:12px}
 .card{background:var(--paper);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;margin-bottom:14px}
@@ -32,7 +34,7 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
 .band .price{font-size:.75em;color:#64748b}
 .qbtn{width:52px;height:52px;font-size:1.7em;border-radius:12px;background:#f1e8d8;color:#7c2d12;flex:none}
 .qbtn:active{background:#e2d3b8}
-.qty{width:44px;text-align:center;font-size:1.25em;font-weight:800;flex:none}
+.qty{width:56px;text-align:center;font-size:1.25em;font-weight:800;flex:none;border:1.5px solid #cbd5e1;border-radius:10px;padding:8px 2px}
 .total{background:#1a0a09;color:#ffd9a0;border-radius:10px;text-align:center;padding:12px;margin-top:12px}
 .total .num{font-size:1.7em;font-weight:800}
 .payrow{display:flex;gap:10px}
@@ -127,7 +129,7 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc }
+import { getFirestore, doc, getDoc, setDoc, addDoc, collection }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { calcSalesTotal, calcPaymentDiff, buildDailyDoc, toDateId, EXPENSE_CATEGORIES } from './logic.js';
 
@@ -147,6 +149,7 @@ let priceBands = [];      // configの価格帯マスタ
 let qty = {};             // key -> 数量
 let weather = '';         // 晴/曇/雨 or ''
 let existingCreatedAt = null;
+let existingDoc = null;   // 上書き時の変更前スナップショット(監査ログ用)
 let saving = false;
 
 function toast(t) { const m = $('msg'); m.textContent = t; m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2600); }
@@ -189,10 +192,14 @@ function renderBands() {
     const info = document.createElement('div'); info.className = 'info';
     info.innerHTML = '<div class="name">' + b.label + '</div><div class="price">' + Number(b.unitPrice).toLocaleString() + '円</div>';
     const minus = document.createElement('button'); minus.className = 'qbtn'; minus.textContent = '-';
-    const num = document.createElement('div'); num.className = 'qty'; num.id = 'qty_' + b.key; num.textContent = qty[b.key];
+    // 数量は直接入力もできる(数字パッドが開く)
+    const num = document.createElement('input'); num.className = 'qty'; num.id = 'qty_' + b.key;
+    num.type = 'number'; num.inputMode = 'numeric'; num.min = '0'; num.value = qty[b.key];
+    num.oninput = () => { qty[b.key] = Math.max(0, Number(num.value) || 0); refreshTotals(); };
+    num.onblur = () => { num.value = qty[b.key]; };
     const plus = document.createElement('button'); plus.className = 'qbtn'; plus.textContent = '+';
-    minus.onclick = () => { if (qty[b.key] > 0) qty[b.key]--; num.textContent = qty[b.key]; refreshTotals(); };
-    plus.onclick = () => { qty[b.key]++; num.textContent = qty[b.key]; refreshTotals(); };
+    minus.onclick = () => { if (qty[b.key] > 0) qty[b.key]--; num.value = qty[b.key]; refreshTotals(); };
+    plus.onclick = () => { qty[b.key]++; num.value = qty[b.key]; refreshTotals(); };
     row.append(info, minus, num, plus); box.appendChild(row);
   });
   refreshTotals();
@@ -249,7 +256,7 @@ document.querySelectorAll('.wbtn').forEach((b) => {
 $('inDate').onchange = loadDay;
 async function loadDay() {
   const id = $('inDate').value; if (!id) return;
-  existingCreatedAt = null;
+  existingCreatedAt = null; existingDoc = null;
   qty = {}; weather = ''; $('inCash').value = ''; $('inCashless').value = '';
   $('inGuests').value = ''; $('inGroups').value = ''; $('inMemo').value = ''; $('expRows').innerHTML = '';
   document.querySelectorAll('.wbtn').forEach((x) => x.classList.remove('sel'));
@@ -257,6 +264,7 @@ async function loadDay() {
     const snap = await getDoc(doc(db, 'bar_pekin_daily', id));
     if (snap.exists()) {
       const d = snap.data();
+      existingDoc = d;
       existingCreatedAt = d.createdAt || null;
       (d.items || []).forEach((it) => { qty[it.key] = it.qty || 0; });
       $('inCash').value = d.payments && d.payments.cash || '';
@@ -289,6 +297,18 @@ async function save(isOpen) {
       user: me, existingCreatedAt: existingCreatedAt, now: new Date().toISOString()
     });
     await setDoc(doc(db, 'bar_pekin_daily', id), docData);
+    // 監査ログ(REQ-F16): 変更前後を追記。閲覧はadminのみ。失敗しても保存自体は成立
+    try {
+      await addDoc(collection(db, 'bar_pekin_audit'), {
+        dateId: id,
+        action: existingDoc ? '上書き' : (isOpen ? '新規保存' : '休業登録'),
+        before: existingDoc || null,
+        after: docData,
+        by: { uid: me.uid, displayName: me.displayName },
+        at: docData.updatedAt
+      });
+    } catch (e2) { /* 監査追記失敗は握りつぶさない方針だが入力は止めない */ console.warn('audit', e2); }
+    existingDoc = docData;
     existingCreatedAt = docData.createdAt;
     $('modeBadge').style.display = 'block';
     toast(isOpen ? id + ' の売上を保存しました' : id + ' を休業日として登録しました');
