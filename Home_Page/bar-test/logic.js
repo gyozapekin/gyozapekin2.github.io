@@ -16,6 +16,18 @@ export function calcPaymentDiff(salesTotal, cash, cashless) {
   return (Number(cash) || 0) + (Number(cashless) || 0) - (Number(salesTotal) || 0);
 }
 
+// その他売上(スペシャルメニュー等の自由入力)の妥当性: 金額が正。名称は空なら「その他」
+export function isValidExtra(e) {
+  return !!e && (Number(e.amount) || 0) > 0;
+}
+
+// その他売上の合計
+export function calcExtrasTotal(extras) {
+  return (extras || []).filter(isValidExtra).reduce(function (sum, e) {
+    return sum + Number(e.amount);
+  }, 0);
+}
+
 // 経費合計
 export function calcExpensesTotal(expenses) {
   return (expenses || []).reduce(function (sum, e) {
@@ -51,7 +63,13 @@ export function buildDailyDoc(opts) {
       qty: opts.isOpen ? (Number(it.qty) || 0) : 0
     };
   });
-  var salesTotal = opts.isOpen ? calcSalesTotal(items) : 0;
+  var extras = opts.isOpen
+    ? (opts.extras || []).filter(isValidExtra).map(function (e) {
+        var label = (e.label == null ? '' : String(e.label)).trim();
+        return { label: label === '' ? 'その他' : label, amount: Number(e.amount) };
+      })
+    : [];
+  var salesTotal = opts.isOpen ? calcSalesTotal(items) + calcExtrasTotal(extras) : 0;
   var expenses = (opts.expenses || []).filter(isValidExpense).map(function (e) {
     return { label: e.label.trim(), amount: Number(e.amount), category: e.category };
   });
@@ -59,6 +77,7 @@ export function buildDailyDoc(opts) {
     date: opts.dateId,
     isOpen: !!opts.isOpen,
     items: items,
+    extras: extras,
     salesTotal: salesTotal,
     payments: {
       cash: opts.isOpen ? (Number(opts.cash) || 0) : 0,

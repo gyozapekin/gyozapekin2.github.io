@@ -98,6 +98,9 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
       <div class="body" style="padding-top:6px">
         <div class="mode" id="modeBadge">この日はすでに保存済みです。上書き編集モードで開いています。</div>
         <div id="bands"></div>
+        <label>その他の売上(スペシャルメニューなど自由入力)</label>
+        <div id="extraRows"></div>
+        <button class="btn-sub" id="btnAddExtra" style="margin-top:8px">その他の行を追加</button>
         <div class="total">売上合計 <span class="num" id="salesTotal">0</span> 円</div>
 
         <label>決済内訳(実収金額)</label>
@@ -142,7 +145,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, addDoc, collection }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { calcSalesTotal, calcPaymentDiff, buildDailyDoc, toDateId, EXPENSE_CATEGORIES } from './logic.js';
+import { calcSalesTotal, calcExtrasTotal, calcPaymentDiff, buildDailyDoc, toDateId, EXPENSE_CATEGORIES } from './logic.js';
 
 // pekin-shift のWebアプリ構成(公開情報)
 const app = initializeApp({
@@ -220,9 +223,27 @@ function currentItems() {
   return priceBands.map((b) => ({ key: b.key, label: b.label, unitPrice: b.unitPrice, qty: qty[b.key] || 0 }));
 }
 
+// その他売上の行(スペシャルメニュー等)
+function addExtraRow(v) {
+  const row = document.createElement('div'); row.className = 'exp-row';
+  const l = document.createElement('input'); l.placeholder = '内容(例: 日本酒)'; l.className = 'exp-label'; l.value = v && v.label || '';
+  const a = document.createElement('input'); a.type = 'number'; a.inputMode = 'numeric'; a.min = '0'; a.placeholder = '金額'; a.className = 'exp-amount'; a.value = v && v.amount || '';
+  a.oninput = refreshTotals;
+  const del = document.createElement('button'); del.className = 'del'; del.textContent = 'x';
+  del.onclick = () => { row.remove(); refreshTotals(); };
+  row.append(l, a, del); $('extraRows').appendChild(row);
+}
+$('btnAddExtra').onclick = () => addExtraRow();
+function readExtras() {
+  return Array.from($('extraRows').children).map((r) => ({
+    label: r.querySelector('.exp-label').value,
+    amount: r.querySelector('.exp-amount').value
+  }));
+}
+
 // 合計と差額の常時表示
 function refreshTotals() {
-  const total = calcSalesTotal(currentItems());
+  const total = calcSalesTotal(currentItems()) + calcExtrasTotal(readExtras());
   $('salesTotal').textContent = total.toLocaleString();
   const cash = $('inCash').value, cashless = $('inCashless').value;
   const d = $('payDiff');
@@ -304,7 +325,7 @@ async function loadDay() {
   const id = $('inDate').value; if (!id) return;
   existingCreatedAt = null; existingDoc = null;
   qty = {}; weather = ''; $('inCash').value = ''; $('inCashless').value = '';
-  $('inGuests').value = ''; $('inGroups').value = ''; $('inMemo').value = ''; $('expRows').innerHTML = '';
+  $('inGuests').value = ''; $('inGroups').value = ''; $('inMemo').value = ''; $('expRows').innerHTML = ''; $('extraRows').innerHTML = '';
   document.querySelectorAll('.wbtn').forEach((x) => x.classList.remove('sel'));
   try {
     const snap = await getDoc(doc(db, 'bar_pekin_daily', id));
@@ -313,6 +334,7 @@ async function loadDay() {
       existingDoc = d;
       existingCreatedAt = d.createdAt || null;
       (d.items || []).forEach((it) => { qty[it.key] = it.qty || 0; });
+      (d.extras || []).forEach(addExtraRow);
       $('inCash').value = d.payments && d.payments.cash || '';
       $('inCashless').value = d.payments && d.payments.cashless || '';
       if (d.guests != null) $('inGuests').value = d.guests;
@@ -346,6 +368,7 @@ async function save(isOpen) {
     const docData = buildDailyDoc({
       dateId: id, isOpen: isOpen,
       items: currentItems(),
+      extras: readExtras(),
       cash: $('inCash').value, cashless: $('inCashless').value,
       guests: $('inGuests').value, groups: $('inGroups').value,
       expenses: readExpenses(), weather: weather, memo: $('inMemo').value,
