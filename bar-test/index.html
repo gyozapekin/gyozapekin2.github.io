@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bar PEKIN 売上管理</title>
+<style>
+:root{--red:#a93226;--red2:#c0392b;--dark:#1a0a09;--paper:#fff;--line:#e2e8f0;--warn:#c62828}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Sans','Yu Gothic UI',sans-serif;background:linear-gradient(160deg,#1a0a09,#3d1010 60%,#1a0a09);min-height:100vh;color:#1a202c}
+.wrap{max-width:480px;margin:0 auto;padding:12px}
+.card{background:var(--paper);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;margin-bottom:14px}
+.head{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;padding:16px;text-align:center}
+.head h1{font-size:1.05em;letter-spacing:.08em}
+.head p{font-size:.72em;opacity:.85;margin-top:2px}
+.body{padding:14px}
+label{display:block;font-size:.75em;font-weight:700;color:#475569;margin:10px 0 4px}
+input,select,textarea{width:100%;border:1.5px solid #cbd5e1;border-radius:8px;padding:11px;font-size:1em;background:#fff;color:#1a202c}
+input:focus,textarea:focus{outline:none;border-color:var(--red2)}
+button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn-main{width:100%;background:linear-gradient(135deg,var(--red),#e74c3c);color:#fff;padding:14px;font-size:1.05em;margin-top:12px}
+.btn-sub{background:#64748b;color:#fff;padding:8px 12px;font-size:.85em}
+.btn-holiday{width:100%;background:#334155;color:#fff;padding:12px;font-size:.95em;margin-top:10px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:#faf6f0;border-bottom:1px solid var(--line)}
+.topbar .who{font-size:.8em;color:#475569;font-weight:700}
+.daterow{display:flex;gap:8px;align-items:center;padding:12px 14px 0}
+.daterow input[type=date]{flex:1}
+.band{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed #e2d9c8}
+.band .info{flex:1;min-width:0}
+.band .name{font-weight:700;font-size:.95em}
+.band .price{font-size:.75em;color:#64748b}
+.qbtn{width:52px;height:52px;font-size:1.7em;border-radius:12px;background:#f1e8d8;color:#7c2d12;flex:none}
+.qbtn:active{background:#e2d3b8}
+.qty{width:44px;text-align:center;font-size:1.25em;font-weight:800;flex:none}
+.total{background:#1a0a09;color:#ffd9a0;border-radius:10px;text-align:center;padding:12px;margin-top:12px}
+.total .num{font-size:1.7em;font-weight:800}
+.payrow{display:flex;gap:10px}
+.payrow>div{flex:1}
+.diff{font-size:.85em;font-weight:700;margin-top:6px;min-height:1.2em}
+.diff.warn{color:var(--warn)}
+.diff.ok{color:#2e7d4f}
+.exp-row{display:flex;gap:6px;margin-top:6px}
+.exp-row input.exp-label{flex:2.2}
+.exp-row input.exp-amount{flex:1.3}
+.exp-row select{flex:1.4}
+.exp-row .del{background:#e2e8f0;color:#475569;flex:none;width:40px}
+.wrow{display:flex;gap:8px;margin-top:2px}
+.wbtn{flex:1;padding:10px;background:#f1f5f9;color:#334155;border:1.5px solid #cbd5e1}
+.wbtn.sel{background:var(--red2);color:#fff;border-color:var(--red2)}
+.note{font-size:.72em;color:#8a7a66;margin-top:6px;line-height:1.5}
+.mode{font-size:.78em;font-weight:700;color:#8a5a00;background:#fff7e0;border:1px solid #eadfa8;border-radius:8px;padding:7px 10px;margin-top:8px;display:none}
+.msg{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1a202c;color:#fff;padding:12px 18px;border-radius:10px;font-size:.9em;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
+.msg.show{opacity:1}
+.err{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:9px 12px;font-size:.82em;color:#991b1b;margin-bottom:10px;display:none}
+#viewMain{display:none}
+.logo{font-size:2em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="viewLogin" class="card">
+    <div class="head"><div class="logo">Bar</div><h1>Bar PEKIN 売上管理</h1><p>NIGHT SALES SYSTEM</p></div>
+    <div class="body">
+      <div class="err" id="loginErr">メールアドレスまたはパスワードが違います。</div>
+      <label>メールアドレス</label>
+      <input type="email" id="inEmail" autocomplete="username" inputmode="email">
+      <label>パスワード</label>
+      <input type="password" id="inPw" autocomplete="current-password">
+      <button class="btn-main" id="btnLogin">ログイン</button>
+    </div>
+  </div>
+
+  <div id="viewMain">
+    <div class="card">
+      <div class="topbar">
+        <span class="who" id="whoami"></span>
+        <button class="btn-sub" id="btnLogout">ログアウト</button>
+      </div>
+      <div class="daterow">
+        <label style="margin:0;flex:none">営業日</label>
+        <input type="date" id="inDate">
+      </div>
+      <div class="body" style="padding-top:6px">
+        <div class="mode" id="modeBadge">この日はすでに保存済みです。上書き編集モードで開いています。</div>
+        <div id="bands"></div>
+        <div class="total">売上合計 <span class="num" id="salesTotal">0</span> 円</div>
+
+        <label>決済内訳(実収金額)</label>
+        <div class="payrow">
+          <div><label>現金</label><input type="number" id="inCash" inputmode="numeric" min="0" placeholder="0"></div>
+          <div><label>キャッシュレス</label><input type="number" id="inCashless" inputmode="numeric" min="0" placeholder="0"></div>
+        </div>
+        <div class="diff" id="payDiff"></div>
+
+        <div class="payrow">
+          <div><label>客数(任意)</label><input type="number" id="inGuests" inputmode="numeric" min="0"></div>
+          <div><label>組数(任意)</label><input type="number" id="inGroups" inputmode="numeric" min="0"></div>
+        </div>
+
+        <label>経費(センターテール負担分)</label>
+        <div id="expRows"></div>
+        <button class="btn-sub" id="btnAddExp" style="margin-top:8px">経費の行を追加</button>
+        <p class="note">ここに入力する経費はセンターテール負担分のみ(本人の確定申告用)。北京負担の原材料費は入力しない。</p>
+
+        <label>天気(任意)</label>
+        <div class="wrow">
+          <button class="wbtn" data-w="晴">晴</button>
+          <button class="wbtn" data-w="曇">曇</button>
+          <button class="wbtn" data-w="雨">雨</button>
+        </div>
+
+        <label>メモ(任意)</label>
+        <textarea id="inMemo" rows="2"></textarea>
+
+        <button class="btn-main" id="btnSave">保存する</button>
+        <button class="btn-holiday" id="btnHoliday">本日休業として登録</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="msg" id="msg"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { calcSalesTotal, calcPaymentDiff, buildDailyDoc, toDateId, EXPENSE_CATEGORIES } from './logic.js';
+
+// pekin-shift のWebアプリ構成(公開情報)
+const app = initializeApp({
+  apiKey: 'AIzaSyBygnsi6cByYRZigxlhR7d0ydVfpFGx8FQ',
+  authDomain: 'pekin-shift.firebaseapp.com',
+  projectId: 'pekin-shift',
+  appId: '1:600393805417:web:126fb18e1c5b64fc677cf8'
+});
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = (id) => document.getElementById(id);
+let me = null;            // {uid, displayName, role}
+let priceBands = [];      // configの価格帯マスタ
+let qty = {};             // key -> 数量
+let weather = '';         // 晴/曇/雨 or ''
+let existingCreatedAt = null;
+let saving = false;
+
+function toast(t) { const m = $('msg'); m.textContent = t; m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2600); }
+
+// ログイン
+$('btnLogin').onclick = async () => {
+  $('loginErr').style.display = 'none';
+  try {
+    await signInWithEmailAndPassword(auth, $('inEmail').value.trim(), $('inPw').value);
+    $('inPw').value = '';
+  } catch (e) { $('loginErr').style.display = 'block'; }
+};
+$('btnLogout').onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async (u) => {
+  if (!u) { me = null; $('viewMain').style.display = 'none'; $('viewLogin').style.display = 'block'; return; }
+  try {
+    const meSnap = await getDoc(doc(db, 'authorizedBarUsers', u.uid));
+    if (!meSnap.exists() || meSnap.data().active !== true) {
+      toast('このアカウントは利用できません'); await signOut(auth); return;
+    }
+    me = { uid: u.uid, displayName: meSnap.data().displayName || '', role: meSnap.data().role };
+    const cfgSnap = await getDoc(doc(db, 'bar_pekin_config', 'config'));
+    priceBands = (cfgSnap.exists() && cfgSnap.data().priceBands) || [];
+    $('whoami').textContent = me.displayName + ' でログイン中';
+    $('viewLogin').style.display = 'none'; $('viewMain').style.display = 'block';
+    $('inDate').value = toDateId(new Date());
+    renderBands();
+    await loadDay();
+  } catch (e) { toast('読み込みに失敗しました: ' + (e.code || e.message)); }
+});
+
+// 価格帯5枠の描画
+function renderBands() {
+  const box = $('bands'); box.innerHTML = '';
+  priceBands.forEach((b) => {
+    if (!(b.key in qty)) qty[b.key] = 0;
+    const row = document.createElement('div'); row.className = 'band';
+    const info = document.createElement('div'); info.className = 'info';
+    info.innerHTML = '<div class="name">' + b.label + '</div><div class="price">' + Number(b.unitPrice).toLocaleString() + '円</div>';
+    const minus = document.createElement('button'); minus.className = 'qbtn'; minus.textContent = '-';
+    const num = document.createElement('div'); num.className = 'qty'; num.id = 'qty_' + b.key; num.textContent = qty[b.key];
+    const plus = document.createElement('button'); plus.className = 'qbtn'; plus.textContent = '+';
+    minus.onclick = () => { if (qty[b.key] > 0) qty[b.key]--; num.textContent = qty[b.key]; refreshTotals(); };
+    plus.onclick = () => { qty[b.key]++; num.textContent = qty[b.key]; refreshTotals(); };
+    row.append(info, minus, num, plus); box.appendChild(row);
+  });
+  refreshTotals();
+}
+
+function currentItems() {
+  return priceBands.map((b) => ({ key: b.key, label: b.label, unitPrice: b.unitPrice, qty: qty[b.key] || 0 }));
+}
+
+// 合計と差額の常時表示
+function refreshTotals() {
+  const total = calcSalesTotal(currentItems());
+  $('salesTotal').textContent = total.toLocaleString();
+  const cash = $('inCash').value, cashless = $('inCashless').value;
+  const d = $('payDiff');
+  if (cash === '' && cashless === '') { d.textContent = ''; return; }
+  const diff = calcPaymentDiff(total, cash, cashless);
+  if (diff === 0) { d.className = 'diff ok'; d.textContent = '売上合計と一致しています'; }
+  else { d.className = 'diff warn'; d.textContent = '売上合計と ' + Math.abs(diff).toLocaleString() + '円 ' + (diff > 0 ? '多い' : '少ない') + ' 状態です(保存は可能)'; }
+}
+$('inCash').oninput = refreshTotals;
+$('inCashless').oninput = refreshTotals;
+
+// 経費行
+function addExpRow(v) {
+  const row = document.createElement('div'); row.className = 'exp-row';
+  const l = document.createElement('input'); l.placeholder = '内容'; l.className = 'exp-label'; l.value = v && v.label || '';
+  const a = document.createElement('input'); a.type = 'number'; a.inputMode = 'numeric'; a.min = '0'; a.placeholder = '金額'; a.className = 'exp-amount'; a.value = v && v.amount || '';
+  const s = document.createElement('select');
+  EXPENSE_CATEGORIES.forEach((c) => { const o = document.createElement('option'); o.value = c; o.textContent = c; s.appendChild(o); });
+  if (v && v.category) s.value = v.category;
+  const del = document.createElement('button'); del.className = 'del'; del.textContent = 'x';
+  del.onclick = () => row.remove();
+  row.append(l, a, s, del); $('expRows').appendChild(row);
+}
+$('btnAddExp').onclick = () => addExpRow();
+function readExpenses() {
+  return Array.from($('expRows').children).map((r) => ({
+    label: r.querySelector('.exp-label').value,
+    amount: r.querySelector('.exp-amount').value,
+    category: r.querySelector('select').value
+  }));
+}
+
+// 天気3択
+document.querySelectorAll('.wbtn').forEach((b) => {
+  b.onclick = () => {
+    weather = (weather === b.dataset.w) ? '' : b.dataset.w;
+    document.querySelectorAll('.wbtn').forEach((x) => x.classList.toggle('sel', x.dataset.w === weather));
+  };
+});
+
+// 日付切替時: 既存レコードを読み込み(上書き編集モード)
+$('inDate').onchange = loadDay;
+async function loadDay() {
+  const id = $('inDate').value; if (!id) return;
+  existingCreatedAt = null;
+  qty = {}; weather = ''; $('inCash').value = ''; $('inCashless').value = '';
+  $('inGuests').value = ''; $('inGroups').value = ''; $('inMemo').value = ''; $('expRows').innerHTML = '';
+  document.querySelectorAll('.wbtn').forEach((x) => x.classList.remove('sel'));
+  try {
+    const snap = await getDoc(doc(db, 'bar_pekin_daily', id));
+    if (snap.exists()) {
+      const d = snap.data();
+      existingCreatedAt = d.createdAt || null;
+      (d.items || []).forEach((it) => { qty[it.key] = it.qty || 0; });
+      $('inCash').value = d.payments && d.payments.cash || '';
+      $('inCashless').value = d.payments && d.payments.cashless || '';
+      if (d.guests != null) $('inGuests').value = d.guests;
+      if (d.groups != null) $('inGroups').value = d.groups;
+      if (d.memo) $('inMemo').value = d.memo;
+      (d.expenses || []).forEach(addExpRow);
+      if (d.weather) { weather = d.weather; document.querySelectorAll('.wbtn').forEach((x) => x.classList.toggle('sel', x.dataset.w === weather)); }
+      $('modeBadge').style.display = 'block';
+    } else {
+      $('modeBadge').style.display = 'none';
+    }
+  } catch (e) { toast('読み込みに失敗しました: ' + (e.code || e.message)); }
+  renderBands();
+}
+
+// 保存
+async function save(isOpen) {
+  if (saving) return; saving = true;
+  try {
+    const id = $('inDate').value;
+    if (!id) { toast('営業日を選んでください'); return; }
+    const docData = buildDailyDoc({
+      dateId: id, isOpen: isOpen,
+      items: currentItems(),
+      cash: $('inCash').value, cashless: $('inCashless').value,
+      guests: $('inGuests').value, groups: $('inGroups').value,
+      expenses: readExpenses(), weather: weather, memo: $('inMemo').value,
+      user: me, existingCreatedAt: existingCreatedAt, now: new Date().toISOString()
+    });
+    await setDoc(doc(db, 'bar_pekin_daily', id), docData);
+    existingCreatedAt = docData.createdAt;
+    $('modeBadge').style.display = 'block';
+    toast(isOpen ? id + ' の売上を保存しました' : id + ' を休業日として登録しました');
+  } catch (e) { toast('保存に失敗しました: ' + (e.code || e.message));
+  } finally { saving = false; }
+}
+$('btnSave').onclick = () => save(true);
+$('btnHoliday').onclick = () => { if (confirm($('inDate').value + ' を休業日(売上0円)として登録します。よろしいですか。')) save(false); };
+</script>
+</body>
+</html>
