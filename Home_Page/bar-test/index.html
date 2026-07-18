@@ -66,6 +66,33 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
 .err{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:9px 12px;font-size:.82em;color:#991b1b;margin-bottom:10px;display:none}
 #viewMain{display:none}
 .logo{font-size:2em}
+.adminlink{font-size:.72em;font-weight:700;color:#a93226;text-decoration:none;border:1.5px solid #e0b4ad;border-radius:8px;padding:5px 9px;margin-right:6px}
+.tabs{display:flex;gap:6px;padding:12px 14px 0}
+.tab{flex:1;padding:11px;text-align:center;background:#faf6f0;color:#7c2d12;border-radius:10px;font-weight:700;font-size:.9em;cursor:pointer;border:1.5px solid #e2d9c8}
+.tab.active{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;border-color:var(--red)}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mlabel{font-weight:800;font-size:1.05em;color:#1a202c}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px}
+.cal .dow{text-align:center;font-size:.68em;font-weight:700;color:#64748b;padding:2px 0}
+.cal .cell{min-height:50px;border:1px solid var(--line);border-radius:8px;padding:3px;position:relative;background:#fff;cursor:pointer}
+.cal .cell .dn{font-size:.66em;font-weight:700;color:#475569}
+.cal .cell .cs{font-size:.82em;font-weight:800;color:#7c2d12;margin-top:1px;line-height:1.1}
+.cal .cell.empty{background:transparent;border:none;cursor:default}
+.cal .cell.closed{background:#fbe9e7;border-color:#f0b4ac}
+.cal .cell.closed .cs{color:var(--warn)}
+.cal .cell.miss{background:#fff7e0;border-color:#eadfa8}
+.cal .cell.miss .cs{color:#8a5a00}
+.cal .cell.today{box-shadow:0 0 0 2px rgba(192,57,43,.35)}
+.miss-note{font-size:.78em;color:#8a5a00;background:#fff7e0;border:1px solid #eadfa8;border-radius:8px;padding:8px 10px;margin-top:10px;display:none}
+.sum-hi{background:#1a0a09;color:#ffd9a0;border-radius:10px;padding:12px;margin-top:12px;text-align:center}
+.sum-hi .num{font-size:1.6em;font-weight:800}
+.sum-hi .mom{font-size:.72em;opacity:.85;margin-top:2px}
+.sumtbl{width:100%;font-size:.85em;margin-top:10px;border-collapse:collapse}
+.sumtbl td{padding:8px 4px;border-bottom:1px solid var(--line)}
+.sumtbl td.k{color:#64748b;font-weight:700}
+.sumtbl td.sub{color:#94a3b8;font-weight:600;padding-left:14px}
+.sumtbl td.v{text-align:right;font-weight:700;color:#1a202c}
+.sumtbl tr.hl td{background:#faf6f0}
 </style>
 </head>
 <body>
@@ -87,8 +114,13 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
     <div class="card">
       <div class="topbar">
         <span class="who" id="whoami"></span>
-        <button class="btn-sub" id="btnLogout">ログアウト</button>
+        <span><a class="adminlink" id="adminLink" href="/admin/" style="display:none">管理画面</a><button class="btn-sub" id="btnLogout">ログアウト</button></span>
       </div>
+      <div class="tabs">
+        <div class="tab active" id="tabInput">日次入力</div>
+        <div class="tab" id="tabMonth">月次</div>
+      </div>
+      <div id="panelInput">
       <div class="wk" id="weekBar"></div>
       <div class="daterow">
         <button class="dbtn" id="btnPrevDay">&lt;</button>
@@ -133,6 +165,22 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
         <button class="btn-main" id="btnSave">保存する</button>
         <button class="btn-holiday" id="btnHoliday">本日休業として登録</button>
       </div>
+      </div>
+
+      <div id="panelMonth" style="display:none">
+        <div class="body" style="padding-top:12px">
+          <div class="mrow">
+            <button class="dbtn" id="btnPrevMonth">&lt;</button>
+            <div class="mlabel" id="monthLabel"></div>
+            <button class="dbtn" id="btnNextMonth">&gt;</button>
+          </div>
+          <div class="cal" id="calGrid"></div>
+          <div class="miss-note" id="missNote"></div>
+          <div class="sum-hi">売上合計 <span class="num" id="mSales">0</span> 円<div class="mom" id="mMom"></div></div>
+          <table class="sumtbl" id="sumTbl"></table>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -143,9 +191,10 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, addDoc, collection }
+import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, getDocs }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { calcSalesTotal, calcExtrasTotal, calcPaymentDiff, buildDailyDoc, toDateId, EXPENSE_CATEGORIES } from './logic.js';
+import { calcSalesTotal, calcExtrasTotal, calcPaymentDiff, buildDailyDoc, toDateId, EXPENSE_CATEGORIES,
+  calcMonthlySummary, calcMonthOverMonth, findMissingBusinessDays, recordSalesTotal, daysInMonth } from './logic.js';
 
 // pekin-shift のWebアプリ構成(公開情報)
 const app = initializeApp({
@@ -160,6 +209,9 @@ const db = getFirestore(app);
 const $ = (id) => document.getElementById(id);
 let me = null;            // {uid, displayName, role}
 let priceBands = [];      // configの価格帯マスタ
+let businessDays = [0, 1, 2, 3]; // 営業予定曜日(打ち忘れ検知用)
+let shareRatio = [];      // 分配比率履歴 [{effectiveFrom, pekinShare}]
+let currentMonth = null;  // 月次画面の表示中の月 'YYYY-MM'
 let qty = {};             // key -> 数量
 let weather = '';         // 晴/曇/雨 or ''
 let existingCreatedAt = null;
@@ -189,7 +241,11 @@ onAuthStateChanged(auth, async (u) => {
     me = { uid: u.uid, displayName: meSnap.data().displayName || '', role: meSnap.data().role };
     const cfgSnap = await getDoc(doc(db, 'bar_pekin_config', 'config'));
     priceBands = (cfgSnap.exists() && cfgSnap.data().priceBands) || [];
+    businessDays = (cfgSnap.exists() && cfgSnap.data().businessDays) || [0, 1, 2, 3];
+    shareRatio = (cfgSnap.exists() && cfgSnap.data().shareRatio) || [];
     $('whoami').textContent = me.displayName + ' でログイン中';
+    $('adminLink').style.display = (me.role === 'admin') ? 'inline-block' : 'none';
+    showTab('input');
     $('viewLogin').style.display = 'none'; $('viewMain').style.display = 'block';
     $('inDate').value = toDateId(new Date());
     renderBands();
@@ -403,6 +459,111 @@ async function save(isOpen) {
 }
 $('btnSave').onclick = () => save(true);
 $('btnHoliday').onclick = () => { if (confirm($('inDate').value + ' を休業日(売上0円)として登録します。よろしいですか。')) save(false); };
+
+// ============================================================
+// 月次画面(フェーズ3)。admin/centertail 両方が閲覧できる(編集履歴は含まない)
+// ============================================================
+function showTab(which) {
+  const isInput = (which === 'input');
+  $('panelInput').style.display = isInput ? 'block' : 'none';
+  $('panelMonth').style.display = isInput ? 'none' : 'block';
+  $('tabInput').classList.toggle('active', isInput);
+  $('tabMonth').classList.toggle('active', !isInput);
+  if (!isInput) loadMonth();
+}
+$('tabInput').onclick = () => showTab('input');
+$('tabMonth').onclick = () => showTab('month');
+
+function shiftMonth(ym, n) {
+  const p = ym.split('-').map(Number);
+  const d = new Date(p[0], p[1] - 1 + n, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+$('btnPrevMonth').onclick = () => { currentMonth = shiftMonth(currentMonth, -1); loadMonth(); };
+$('btnNextMonth').onclick = () => { currentMonth = shiftMonth(currentMonth, 1); loadMonth(); };
+
+// 1か月分の日次レコードを範囲クエリで取得(日付ID=YYYY-MM-DD なので月頭〜月末で絞れる)
+async function fetchMonthRecords(ym) {
+  const q = query(collection(db, 'bar_pekin_daily'),
+    where('date', '>=', ym + '-01'), where('date', '<=', ym + '-31'));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => d.data());
+}
+
+async function loadMonth() {
+  if (!currentMonth) currentMonth = toDateId(new Date()).slice(0, 7);
+  const parts = currentMonth.split('-').map(Number);
+  $('monthLabel').textContent = parts[0] + '年' + parts[1] + '月';
+  let recs = [], prevRecs = [];
+  try {
+    recs = await fetchMonthRecords(currentMonth);
+    prevRecs = await fetchMonthRecords(shiftMonth(currentMonth, -1));
+  } catch (e) { toast('月次の読み込みに失敗しました: ' + (e.code || e.message)); return; }
+  const summary = calcMonthlySummary(recs, currentMonth, shareRatio);
+  const prevSummary = calcMonthlySummary(prevRecs, shiftMonth(currentMonth, -1), shareRatio);
+  renderCalendar(currentMonth, recs);
+  renderSummary(summary, prevSummary);
+}
+
+function renderCalendar(ym, recs) {
+  const grid = $('calGrid'); grid.innerHTML = '';
+  const youbi = ['日', '月', '火', '水', '木', '金', '土'];
+  youbi.forEach((w) => { const c = document.createElement('div'); c.className = 'dow'; c.textContent = w; grid.appendChild(c); });
+  const map = {}; recs.forEach((r) => { if (r && r.date) map[r.date] = r; });
+  const parts = ym.split('-').map(Number);
+  const lead = new Date(parts[0], parts[1] - 1, 1).getDay();
+  for (let i = 0; i < lead; i++) { const c = document.createElement('div'); c.className = 'cell empty'; grid.appendChild(c); }
+  const today = toDateId(new Date());
+  const miss = findMissingBusinessDays(ym, businessDays, recs, today);
+  const missSet = {}; miss.forEach((m) => { missSet[m] = true; });
+  const n = daysInMonth(parts[0], parts[1]);
+  for (let d = 1; d <= n; d++) {
+    const id = ym + '-' + String(d).padStart(2, '0');
+    const cell = document.createElement('div'); cell.className = 'cell';
+    const r = map[id];
+    let inner = '<div class="dn">' + d + '</div>';
+    if (r) {
+      if (r.isOpen === false) { cell.classList.add('closed'); inner += '<div class="cs">休</div>'; }
+      else { inner += '<div class="cs">' + recordSalesTotal(r).toLocaleString() + '</div>'; }
+    } else if (missSet[id]) { cell.classList.add('miss'); inner += '<div class="cs">未</div>'; }
+    if (id === today) cell.classList.add('today');
+    cell.innerHTML = inner;
+    cell.onclick = () => { $('inDate').value = id; showTab('input'); loadDay(); };
+    grid.appendChild(cell);
+  }
+  const mn = $('missNote');
+  if (miss.length > 0) { mn.style.display = 'block'; mn.textContent = '打ち忘れの可能性がある営業日が ' + miss.length + ' 日あります(黄色「未」)。タップすると入力できます。'; }
+  else { mn.style.display = 'none'; }
+}
+
+function renderSummary(s, prev) {
+  $('mSales').textContent = s.salesTotal.toLocaleString();
+  const mom = calcMonthOverMonth(s.salesTotal, prev.salesTotal);
+  $('mMom').textContent = (mom === null) ? '前月比 データなし' : ('前月比 ' + (mom > 0 ? '+' : '') + mom + '%');
+  const pct = Math.round(s.share.pekinShare * 100);
+  const rows = [
+    ['現金', s.payments.cash.toLocaleString() + ' 円', 'k'],
+    ['キャッシュレス', s.payments.cashless.toLocaleString() + ' 円', 'k'],
+    ['営業日数', s.openDays + ' 日' + (s.closedDays ? '(休業' + s.closedDays + '日)' : ''), 'k'],
+    ['日平均売上', s.dailyAverage.toLocaleString() + ' 円', 'k'],
+    ['客単価', (s.avgPerGuest === null ? 'データなし' : s.avgPerGuest.toLocaleString() + ' 円'), 'k'],
+    ['経費合計(センターテール負担)', s.expensesTotal.toLocaleString() + ' 円', 'k'],
+    ['仕入', (s.expenseByCategory['仕入'] || 0).toLocaleString() + ' 円', 'sub'],
+    ['消耗品', (s.expenseByCategory['消耗品'] || 0).toLocaleString() + ' 円', 'sub'],
+    ['その他', (s.expenseByCategory['その他'] || 0).toLocaleString() + ' 円', 'sub'],
+    ['北京取り分(' + pct + '%)', s.share.pekinAmount.toLocaleString() + ' 円', 'hl'],
+    ['センターテール取り分(' + (100 - pct) + '%)', s.share.centertailAmount.toLocaleString() + ' 円', 'hl'],
+    ['センターテール収支(取り分-経費)', s.centertailBalance.toLocaleString() + ' 円', 'hl']
+  ];
+  const tbl = $('sumTbl'); tbl.innerHTML = '';
+  rows.forEach((r) => {
+    const tr = document.createElement('tr');
+    if (r[2] === 'hl') tr.className = 'hl';
+    const kClass = (r[2] === 'sub') ? 'sub' : 'k';
+    tr.innerHTML = '<td class="' + kClass + '">' + r[0] + '</td><td class="v">' + r[1] + '</td>';
+    tbl.appendChild(tr);
+  });
+}
 </script>
 </body>
 </html>
