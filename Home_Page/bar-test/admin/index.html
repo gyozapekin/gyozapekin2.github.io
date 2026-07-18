@@ -113,8 +113,9 @@ a.back{font-size:.72em;color:#a93226;font-weight:700;text-decoration:none}
           <div class="sub-h">営業予定曜日(打ち忘れ検知に使用)</div>
           <div class="wdays" id="wdays"></div>
           <div class="sub-h">価格帯マスタ(単価)</div>
-          <p class="note">単価を変更しても過去の売上金額は変わりません(入力時の単価が各日に保存済み)。</p>
+          <p class="note">単価を変更しても過去の売上金額は変わりません(入力時の単価が各日に保存済み)。行の追加・削除もできます。</p>
           <div id="bandEdit"></div>
+          <button class="btn-sub btn-sm" id="btnAddBandAdmin" style="margin-top:6px">価格帯を追加</button>
           <div class="sub-h">売上分配比率(北京の取り分)</div>
           <div id="ratioList"></div>
           <div class="ratio-row">
@@ -340,17 +341,21 @@ function renderWdays() {
   });
 }
 
+function newBandKey() { return 'band_' + Date.now().toString(36) + Math.floor(Math.random() * 1000); }
 function renderBandEdit() {
   const box = $('bandEdit'); box.innerHTML = '';
   config.priceBands.forEach((b, i) => {
     const row = document.createElement('div'); row.className = 'band-row';
-    const l = document.createElement('input'); l.className = 'bl'; l.value = b.label || ''; l.dataset.i = i;
+    const l = document.createElement('input'); l.className = 'bl'; l.placeholder = '内容'; l.value = b.label || '';
     l.oninput = () => { config.priceBands[i].label = l.value; };
-    const p = document.createElement('input'); p.className = 'bp'; p.type = 'number'; p.min = '0'; p.value = b.unitPrice; p.dataset.i = i;
+    const p = document.createElement('input'); p.className = 'bp'; p.type = 'number'; p.min = '0'; p.placeholder = '値段'; p.value = b.unitPrice;
     p.oninput = () => { config.priceBands[i].unitPrice = Number(p.value) || 0; };
-    row.append(l, p); box.appendChild(row);
+    const del = document.createElement('button'); del.className = 'btn-sm btn-danger'; del.textContent = '削除'; del.style.flex = 'none';
+    del.onclick = () => { config.priceBands.splice(i, 1); renderBandEdit(); };
+    row.append(l, p, del); box.appendChild(row);
   });
 }
+$('btnAddBandAdmin').onclick = () => { config.priceBands.push({ key: newBandKey(), label: '', unitPrice: 0 }); renderBandEdit(); };
 
 function renderRatioList() {
   const box = $('ratioList'); box.innerHTML = '';
@@ -378,13 +383,18 @@ $('btnAddRatio').onclick = () => {
 
 $('btnSaveConfig').onclick = async () => {
   if (config.businessDays.length === 0) { toast('営業曜日を1つ以上選んでください'); return; }
+  const bands = (config.priceBands || []).filter((b) => !((b.label || '').trim() === '' && (Number(b.unitPrice) || 0) === 0));
+  if (bands.length === 0) { toast('価格帯を1つ以上入れてください'); return; }
+  if (bands.find((b) => (b.label || '').trim() === '' || (Number(b.unitPrice) || 0) <= 0)) { toast('価格帯は名前と1円以上の値段を入れてください'); return; }
+  const cleaned = bands.map((b) => ({ key: b.key || newBandKey(), label: b.label.trim(), unitPrice: Number(b.unitPrice) || 0 }));
   try {
     await setDoc(doc(db, 'bar_pekin_config', 'config'), {
       businessDays: config.businessDays.slice().sort((a, b) => a - b),
-      priceBands: config.priceBands,
+      priceBands: cleaned,
       shareRatio: config.shareRatio,
       updatedAt: new Date().toISOString()
     });
+    config.priceBands = cleaned; renderBandEdit();
     toast('設定を保存しました');
   } catch (e) { toast('保存に失敗: ' + (e.code || e.message)); }
 };
