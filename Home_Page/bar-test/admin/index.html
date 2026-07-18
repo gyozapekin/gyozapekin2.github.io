@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Bar PEKIN 管理画面</title>
+<style>
+:root{--red:#a93226;--red2:#c0392b;--dark:#1a0a09;--paper:#fff;--line:#e2e8f0;--warn:#c62828;--ok:#2e7d4f}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Sans','Yu Gothic UI',sans-serif;background:linear-gradient(160deg,#1a0a09,#3d1010 60%,#1a0a09);min-height:100vh;color:#1a202c}
+.wrap{max-width:560px;margin:0 auto;padding:12px}
+.card{background:var(--paper);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35);overflow:hidden;margin-bottom:14px}
+.head{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;padding:16px;text-align:center}
+.head h1{font-size:1.05em;letter-spacing:.06em}
+.head p{font-size:.72em;opacity:.85;margin-top:2px}
+.body{padding:14px}
+label{display:block;font-size:.75em;font-weight:700;color:#475569;margin:10px 0 4px}
+input,select,textarea{width:100%;border:1.5px solid #cbd5e1;border-radius:8px;padding:10px;font-size:1em;background:#fff;color:#1a202c}
+input:focus,select:focus{outline:none;border-color:var(--red2)}
+button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
+.btn-main{width:100%;background:linear-gradient(135deg,var(--red),#e74c3c);color:#fff;padding:13px;font-size:1.02em;margin-top:12px}
+.btn-sub{background:#64748b;color:#fff;padding:8px 12px;font-size:.85em}
+.btn-sm{padding:7px 11px;font-size:.8em}
+.btn-danger{background:#b91c1c;color:#fff}
+.btn-ok{background:var(--ok);color:#fff}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:#faf6f0;border-bottom:1px solid var(--line)}
+.topbar .who{font-size:.8em;color:#475569;font-weight:700}
+.nav{display:flex;flex-wrap:wrap;gap:6px;padding:12px 14px 0}
+.nav .tab{flex:1;min-width:80px;padding:10px 6px;text-align:center;background:#faf6f0;color:#7c2d12;border-radius:9px;font-weight:700;font-size:.82em;cursor:pointer;border:1.5px solid #e2d9c8}
+.nav .tab.active{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;border-color:var(--red)}
+.sec{display:none}
+.sec.show{display:block}
+.err{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:9px 12px;font-size:.82em;color:#991b1b;margin-bottom:10px;display:none}
+.note{font-size:.72em;color:#8a7a66;margin-top:6px;line-height:1.5}
+.list-item{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px}
+.li-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.li-name{font-weight:700;font-size:.95em}
+.li-meta{font-size:.72em;color:#64748b;margin-top:2px}
+.badge{font-size:.68em;font-weight:700;padding:2px 8px;border-radius:20px}
+.badge.on{background:#dcfce7;color:#166534}
+.badge.off{background:#fee2e2;color:#991b1b}
+.badge.role{background:#e0e7ff;color:#3730a3;margin-left:6px}
+.wdays{display:flex;gap:4px}
+.wday{flex:1;text-align:center;padding:9px 2px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:.85em;font-weight:700;color:#475569;cursor:pointer;background:#fff}
+.wday.sel{background:var(--red2);color:#fff;border-color:var(--red2)}
+.band-row,.ratio-row{display:flex;gap:6px;align-items:center;margin-top:6px}
+.band-row .bl{flex:2}.band-row .bp{flex:1}
+.tbl{width:100%;font-size:.78em;border-collapse:collapse;margin-top:8px}
+.tbl th,.tbl td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl th{color:#64748b;font-size:.9em;position:sticky;top:0;background:#fff}
+.scroll{overflow-x:auto}
+.audit{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;font-size:.8em}
+.audit .a-h{display:flex;justify-content:space-between;font-weight:700}
+.audit pre{background:#f8fafc;border-radius:6px;padding:8px;margin-top:6px;font-size:.9em;white-space:pre-wrap;word-break:break-all;max-height:180px;overflow:auto}
+.msg{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1a202c;color:#fff;padding:12px 18px;border-radius:10px;font-size:.9em;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center;z-index:9}
+.msg.show{opacity:1}
+#viewMain{display:none}
+.logo{font-size:1.6em}
+.sub-h{font-weight:800;font-size:.95em;color:#7c2d12;margin:14px 0 4px;border-left:4px solid var(--red2);padding-left:8px}
+a.back{font-size:.72em;color:#a93226;font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="viewLogin" class="card">
+    <div class="head"><div class="logo">Bar 管理</div><h1>Bar PEKIN 管理画面</h1><p>ADMIN ONLY</p></div>
+    <div class="body">
+      <div class="err" id="loginErr">メールアドレスまたはパスワードが違います。</div>
+      <label>メールアドレス</label>
+      <input type="email" id="inEmail" autocomplete="username" inputmode="email">
+      <label>パスワード</label>
+      <input type="password" id="inPw" autocomplete="current-password">
+      <button class="btn-main" id="btnLogin">ログイン</button>
+      <p class="note">この画面は管理者(admin)専用です。日次入力は <a class="back" href="/">売上入力画面</a> から。</p>
+    </div>
+  </div>
+
+  <div id="viewMain">
+    <div class="card">
+      <div class="topbar">
+        <span class="who" id="whoami"></span>
+        <span><a class="back" href="/" style="margin-right:8px">入力画面へ</a><button class="btn-sub" id="btnLogout">ログアウト</button></span>
+      </div>
+      <div class="nav">
+        <div class="tab active" data-sec="staff">センターテール</div>
+        <div class="tab" data-sec="config">設定</div>
+        <div class="tab" data-sec="data">データ閲覧</div>
+        <div class="tab" data-sec="audit">編集履歴</div>
+      </div>
+      <div class="body">
+
+        <!-- センターテール管理 -->
+        <div class="sec show" id="sec-staff">
+          <div class="sub-h">アカウント一覧</div>
+          <div id="userList"></div>
+          <div class="sub-h">センターテールを追加</div>
+          <div class="err" id="addErr"></div>
+          <label>表示名</label>
+          <input type="text" id="newName" placeholder="例: ひろし">
+          <label>メールアドレス(ログインID)</label>
+          <input type="email" id="newEmail" inputmode="email" placeholder="例: hiroshi2@bar.gyozapekin.com">
+          <label>初期パスワード(6文字以上。本人に伝えてください)</label>
+          <input type="text" id="newPw" placeholder="初期パスワード">
+          <button class="btn-main" id="btnAddStaff">このセンターテールを追加する</button>
+          <p class="note">追加後、本人はこのメールとパスワードで売上入力画面にログインできます。パスワードは秘書やシステムに保存されません。物理削除はできません。辞めた場合は一覧から「無効化」してください。</p>
+        </div>
+
+        <!-- 設定 -->
+        <div class="sec" id="sec-config">
+          <div class="sub-h">営業予定曜日(打ち忘れ検知に使用)</div>
+          <div class="wdays" id="wdays"></div>
+          <div class="sub-h">価格帯マスタ(単価)</div>
+          <p class="note">単価を変更しても過去の売上金額は変わりません(入力時の単価が各日に保存済み)。</p>
+          <div id="bandEdit"></div>
+          <div class="sub-h">売上分配比率(北京の取り分)</div>
+          <div id="ratioList"></div>
+          <div class="ratio-row">
+            <input type="month" id="newRatioMonth" style="flex:1.4">
+            <input type="number" id="newRatioPct" min="0" max="100" placeholder="北京%" style="flex:1">
+            <button class="btn-sub btn-sm" id="btnAddRatio" style="flex:none">追加</button>
+          </div>
+          <p class="note">指定した月以降に適用されます。過去の月は当時の比率のまま再計算されません。</p>
+          <button class="btn-main" id="btnSaveConfig">設定を保存する</button>
+        </div>
+
+        <!-- データ閲覧 -->
+        <div class="sec" id="sec-data">
+          <div class="sub-h">月次データ閲覧</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-sub btn-sm" id="dPrev">&lt;</button>
+            <input type="month" id="dMonth" style="flex:1">
+            <button class="btn-sub btn-sm" id="dNext">&gt;</button>
+          </div>
+          <div id="dataSummary" style="font-size:.85em;margin-top:10px"></div>
+          <div class="scroll"><table class="tbl" id="dataTbl"></table></div>
+        </div>
+
+        <!-- 編集履歴 -->
+        <div class="sec" id="sec-audit">
+          <div class="sub-h">編集履歴(監査ログ)</div>
+          <p class="note">保存・上書き・休業登録の記録です。追記のみで、書き換え・削除はできません。管理者のみ閲覧できます。</p>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+            <input type="date" id="aDate" style="flex:1">
+            <button class="btn-sub btn-sm" id="aFilter" style="flex:none">この日で絞る</button>
+            <button class="btn-sub btn-sm" id="aClear" style="flex:none">最新50件</button>
+          </div>
+          <div id="auditList"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="msg" id="msg"></div>
+
+<script type="module">
+import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, where, orderBy, limit }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { calcMonthlySummary, recordSalesTotal } from '../logic.js';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyBygnsi6cByYRZigxlhR7d0ydVfpFGx8FQ',
+  authDomain: 'pekin-shift.firebaseapp.com',
+  projectId: 'pekin-shift',
+  appId: '1:600393805417:web:126fb18e1c5b64fc677cf8'
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const $ = (id) => document.getElementById(id);
+let me = null;
+let config = { businessDays: [0, 1, 2, 3], priceBands: [], shareRatio: [] };
+let dMonth = null; // データ閲覧の月
+
+function toast(t) { const m = $('msg'); m.textContent = t; m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2800); }
+function yen(n) { return (Number(n) || 0).toLocaleString(); }
+
+// ---- ログイン ----
+$('btnLogin').onclick = async () => {
+  $('loginErr').style.display = 'none';
+  try {
+    await signInWithEmailAndPassword(auth, $('inEmail').value.trim(), $('inPw').value);
+    $('inPw').value = '';
+  } catch (e) { $('loginErr').style.display = 'block'; }
+};
+$('btnLogout').onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async (u) => {
+  if (!u || u.isAnonymous) { me = null; $('viewMain').style.display = 'none'; $('viewLogin').style.display = 'block'; return; }
+  try {
+    const meSnap = await getDoc(doc(db, 'authorizedBarUsers', u.uid));
+    // 画面側ガード(ルール側でも二重に保護される)。admin以外は入れない
+    if (!meSnap.exists() || meSnap.data().active !== true || meSnap.data().role !== 'admin') {
+      toast('この画面は管理者専用です'); await signOut(auth);
+      $('viewMain').style.display = 'none'; $('viewLogin').style.display = 'block'; return;
+    }
+    me = { uid: u.uid, displayName: meSnap.data().displayName || '', role: 'admin' };
+    $('whoami').textContent = me.displayName + '(管理者)';
+    $('viewLogin').style.display = 'none'; $('viewMain').style.display = 'block';
+    await loadConfig();
+    await loadUsers();
+    dMonth = new Date().toISOString().slice(0, 7);
+    $('dMonth').value = dMonth;
+  } catch (e) { toast('読み込みに失敗しました: ' + (e.code || e.message)); }
+});
+
+// ---- タブ切替 ----
+document.querySelectorAll('.nav .tab').forEach((t) => {
+  t.onclick = () => {
+    document.querySelectorAll('.nav .tab').forEach((x) => x.classList.toggle('active', x === t));
+    document.querySelectorAll('.sec').forEach((s) => s.classList.remove('show'));
+    $('sec-' + t.dataset.sec).classList.add('show');
+    if (t.dataset.sec === 'data') loadData();
+    if (t.dataset.sec === 'audit') loadAudit();
+  };
+});
+
+// ============================================================
+// センターテール管理(REQ-N10)
+// ============================================================
+async function loadUsers() {
+  const box = $('userList'); box.innerHTML = '読み込み中...';
+  try {
+    const snap = await getDocs(collection(db, 'authorizedBarUsers'));
+    box.innerHTML = '';
+    snap.docs.map((d) => ({ uid: d.id, ...d.data() }))
+      .sort((a, b) => (a.role === b.role ? 0 : a.role === 'admin' ? -1 : 1))
+      .forEach((u) => box.appendChild(userItem(u)));
+  } catch (e) { box.innerHTML = ''; toast('一覧の取得に失敗: ' + (e.code || e.message)); }
+}
+
+function userItem(u) {
+  const wrap = document.createElement('div'); wrap.className = 'list-item';
+  const roleLabel = u.role === 'admin' ? '管理者' : 'センターテール';
+  const active = u.active === true;
+  const row = document.createElement('div'); row.className = 'li-row';
+  row.innerHTML = '<div><div class="li-name">' + (u.displayName || '(名称未設定)') +
+    '<span class="badge role">' + roleLabel + '</span>' +
+    '<span class="badge ' + (active ? 'on">有効' : 'off">無効') + '</span></div>' +
+    '<div class="li-meta">' + (u.email || '') + '</div></div>';
+  wrap.appendChild(row);
+  // adminは無効化させない(自己締め出し防止。ルール側でも自分の無効化は拒否)
+  if (u.role !== 'admin') {
+    const btn = document.createElement('button');
+    btn.className = 'btn-sm ' + (active ? 'btn-danger' : 'btn-ok');
+    btn.textContent = active ? '無効化' : '有効化';
+    btn.onclick = () => toggleUser(u, !active);
+    const holder = document.createElement('div'); holder.style.marginTop = '8px'; holder.style.textAlign = 'right';
+    holder.appendChild(btn); wrap.appendChild(holder);
+  }
+  return wrap;
+}
+
+async function toggleUser(u, toActive) {
+  const verb = toActive ? '有効化' : '無効化';
+  if (!confirm(u.displayName + ' を' + verb + 'します。よろしいですか。' + (toActive ? '' : '無効化すると即座にログインできなくなります。'))) return;
+  try {
+    await updateDoc(doc(db, 'authorizedBarUsers', u.uid), {
+      role: u.role, displayName: u.displayName || '', active: toActive
+    });
+    toast(u.displayName + ' を' + verb + 'しました');
+    await loadUsers();
+  } catch (e) { toast(verb + 'に失敗: ' + (e.code || e.message)); }
+}
+
+// センターテール追加: セカンダリアプリインスタンスで作成し、adminセッションを維持したまま許可リストへ登録
+$('btnAddStaff').onclick = async () => {
+  $('addErr').style.display = 'none';
+  const name = $('newName').value.trim();
+  const email = $('newEmail').value.trim();
+  const pw = $('newPw').value;
+  if (!name || !email || pw.length < 6) { showAddErr('表示名・メール・6文字以上のパスワードを入力してください。'); return; }
+  let secondary = null;
+  try {
+    secondary = initializeApp(firebaseConfig, 'secondary-' + Date.now());
+    const secAuth = getAuth(secondary);
+    const cred = await createUserWithEmailAndPassword(secAuth, email, pw);
+    const newUid = cred.user.uid;
+    await signOut(secAuth); // セカンダリのセッションだけサインアウト(adminのプライマリは無影響)
+    // プライマリ(admin)で許可リストに登録。ルールでcreateはadminのみ許可
+    await setDoc(doc(db, 'authorizedBarUsers', newUid), {
+      role: 'centertail', displayName: name, active: true, email: email,
+      createdAt: new Date().toISOString(), createdBy: me.uid
+    });
+    toast(name + ' を追加しました');
+    $('newName').value = ''; $('newEmail').value = ''; $('newPw').value = '';
+    await loadUsers();
+  } catch (e) {
+    const code = e.code || e.message || '';
+    if (code.indexOf('email-already-in-use') >= 0) showAddErr('このメールアドレスは既に使われています。');
+    else if (code.indexOf('invalid-email') >= 0) showAddErr('メールアドレスの形式が正しくありません。');
+    else if (code.indexOf('weak-password') >= 0) showAddErr('パスワードは6文字以上にしてください。');
+    else showAddErr('追加に失敗しました: ' + code);
+  } finally {
+    if (secondary) { try { await deleteApp(secondary); } catch (e2) {} }
+  }
+};
+function showAddErr(t) { const e = $('addErr'); e.textContent = t; e.style.display = 'block'; }
+
+// ============================================================
+// 設定(REQ-F13 営業曜日 / 価格帯単価 / REQ-F15 分配比率)
+// ============================================================
+async function loadConfig() {
+  const snap = await getDoc(doc(db, 'bar_pekin_config', 'config'));
+  if (snap.exists()) {
+    const d = snap.data();
+    config = {
+      businessDays: d.businessDays || [0, 1, 2, 3],
+      priceBands: d.priceBands || [],
+      shareRatio: d.shareRatio || []
+    };
+  }
+  renderWdays();
+  renderBandEdit();
+  renderRatioList();
+}
+
+function renderWdays() {
+  const box = $('wdays'); box.innerHTML = '';
+  const youbi = ['日', '月', '火', '水', '木', '金', '土'];
+  youbi.forEach((w, i) => {
+    const c = document.createElement('div');
+    c.className = 'wday' + (config.businessDays.indexOf(i) >= 0 ? ' sel' : '');
+    c.textContent = w;
+    c.onclick = () => {
+      const idx = config.businessDays.indexOf(i);
+      if (idx >= 0) config.businessDays.splice(idx, 1); else config.businessDays.push(i);
+      config.businessDays.sort((a, b) => a - b);
+      c.classList.toggle('sel');
+    };
+    box.appendChild(c);
+  });
+}
+
+function renderBandEdit() {
+  const box = $('bandEdit'); box.innerHTML = '';
+  config.priceBands.forEach((b, i) => {
+    const row = document.createElement('div'); row.className = 'band-row';
+    const l = document.createElement('input'); l.className = 'bl'; l.value = b.label || ''; l.dataset.i = i;
+    l.oninput = () => { config.priceBands[i].label = l.value; };
+    const p = document.createElement('input'); p.className = 'bp'; p.type = 'number'; p.min = '0'; p.value = b.unitPrice; p.dataset.i = i;
+    p.oninput = () => { config.priceBands[i].unitPrice = Number(p.value) || 0; };
+    row.append(l, p); box.appendChild(row);
+  });
+}
+
+function renderRatioList() {
+  const box = $('ratioList'); box.innerHTML = '';
+  const sorted = config.shareRatio.slice().sort((a, b) => a.effectiveFrom < b.effectiveFrom ? -1 : 1);
+  sorted.forEach((r) => {
+    const row = document.createElement('div'); row.className = 'li-meta';
+    row.style.padding = '4px 0';
+    row.textContent = r.effectiveFrom + ' から  北京 ' + Math.round(r.pekinShare * 100) + '% / センターテール ' + Math.round((1 - r.pekinShare) * 100) + '%';
+    box.appendChild(row);
+  });
+  if (sorted.length === 0) box.innerHTML = '<div class="li-meta" style="padding:4px 0">未設定(既定 北京30%)</div>';
+}
+
+$('btnAddRatio').onclick = () => {
+  const m = $('newRatioMonth').value; // 'YYYY-MM'
+  const pct = Number($('newRatioPct').value);
+  if (!/^\d{4}-\d{2}$/.test(m)) { toast('適用開始月を選んでください'); return; }
+  if (!(pct >= 0 && pct <= 100)) { toast('北京%は0〜100で入力してください'); return; }
+  config.shareRatio = config.shareRatio.filter((r) => r.effectiveFrom !== m);
+  config.shareRatio.push({ effectiveFrom: m, pekinShare: Math.round(pct) / 100 });
+  $('newRatioMonth').value = ''; $('newRatioPct').value = '';
+  renderRatioList();
+  toast('分配比率を追加しました(保存で確定)');
+};
+
+$('btnSaveConfig').onclick = async () => {
+  if (config.businessDays.length === 0) { toast('営業曜日を1つ以上選んでください'); return; }
+  try {
+    await setDoc(doc(db, 'bar_pekin_config', 'config'), {
+      businessDays: config.businessDays.slice().sort((a, b) => a - b),
+      priceBands: config.priceBands,
+      shareRatio: config.shareRatio,
+      updatedAt: new Date().toISOString()
+    });
+    toast('設定を保存しました');
+  } catch (e) { toast('保存に失敗: ' + (e.code || e.message)); }
+};
+
+// ============================================================
+// データ閲覧(全期間・月単位)
+// ============================================================
+$('dMonth').onchange = () => { dMonth = $('dMonth').value; loadData(); };
+$('dPrev').onclick = () => { dMonth = shiftMonth(dMonth, -1); $('dMonth').value = dMonth; loadData(); };
+$('dNext').onclick = () => { dMonth = shiftMonth(dMonth, 1); $('dMonth').value = dMonth; loadData(); };
+function shiftMonth(ym, n) { const p = ym.split('-').map(Number); const d = new Date(p[0], p[1] - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+
+async function loadData() {
+  if (!dMonth) dMonth = new Date().toISOString().slice(0, 7);
+  const tbl = $('dataTbl'); tbl.innerHTML = '<tr><td>読み込み中...</td></tr>';
+  try {
+    const q = query(collection(db, 'bar_pekin_daily'), where('date', '>=', dMonth + '-01'), where('date', '<=', dMonth + '-31'));
+    const snap = await getDocs(q);
+    const recs = snap.docs.map((d) => d.data()).sort((a, b) => a.date < b.date ? -1 : 1);
+    const s = calcMonthlySummary(recs, dMonth, config.shareRatio);
+    $('dataSummary').innerHTML = '売上合計 <b>' + yen(s.salesTotal) + '</b> 円 / 営業' + s.openDays + '日 / 北京 ' + yen(s.share.pekinAmount) + '円 / センターテール ' + yen(s.share.centertailAmount) + '円 / センターテール収支 ' + yen(s.centertailBalance) + '円';
+    let html = '<tr><th>日付</th><th>営業</th><th>売上</th><th>現金</th><th>ｷｬｯｼｭﾚｽ</th><th>客数</th><th>経費</th><th>入力者</th></tr>';
+    recs.forEach((r) => {
+      const exp = (r.expenses || []).reduce((a, e) => a + (Number(e.amount) || 0), 0);
+      html += '<tr><td>' + r.date + '</td><td>' + (r.isOpen === false ? '休' : '○') + '</td><td>' + yen(recordSalesTotal(r)) +
+        '</td><td>' + yen(r.payments && r.payments.cash) + '</td><td>' + yen(r.payments && r.payments.cashless) +
+        '</td><td>' + (r.guests != null ? r.guests : '') + '</td><td>' + yen(exp) + '</td><td>' + ((r.enteredBy && r.enteredBy.displayName) || '') + '</td></tr>';
+    });
+    if (recs.length === 0) html += '<tr><td colspan="8" style="text-align:center;color:#94a3b8">この月のデータはありません</td></tr>';
+    tbl.innerHTML = html;
+  } catch (e) { tbl.innerHTML = ''; toast('データ取得に失敗: ' + (e.code || e.message)); }
+}
+
+// ============================================================
+// 編集履歴(REQ-F16 監査ログ・admin専用)
+// ============================================================
+$('aFilter').onclick = () => loadAudit($('aDate').value || null);
+$('aClear').onclick = () => { $('aDate').value = ''; loadAudit(null); };
+
+async function loadAudit(dateId) {
+  const box = $('auditList'); box.innerHTML = '読み込み中...';
+  try {
+    let q;
+    if (dateId) {
+      q = query(collection(db, 'bar_pekin_audit'), where('dateId', '==', dateId));
+    } else {
+      q = query(collection(db, 'bar_pekin_audit'), orderBy('at', 'desc'), limit(50));
+    }
+    const snap = await getDocs(q);
+    let entries = snap.docs.map((d) => d.data());
+    if (dateId) entries.sort((a, b) => (a.at < b.at ? 1 : -1)); // 日付絞りは新しい順に整える
+    box.innerHTML = '';
+    if (entries.length === 0) { box.innerHTML = '<div class="li-meta" style="padding:8px 0">該当する履歴はありません</div>'; return; }
+    entries.forEach((a) => box.appendChild(auditItem(a)));
+  } catch (e) { box.innerHTML = ''; toast('履歴の取得に失敗: ' + (e.code || e.message)); }
+}
+
+function auditItem(a) {
+  const wrap = document.createElement('div'); wrap.className = 'audit';
+  const at = (a.at || '').replace('T', ' ').slice(0, 16);
+  const h = document.createElement('div'); h.className = 'a-h';
+  h.innerHTML = '<span>' + (a.dateId || '') + '  ' + (a.action || '') + '</span><span style="color:#64748b;font-weight:600">' + at + '</span>';
+  const who = document.createElement('div'); who.className = 'li-meta';
+  who.textContent = '入力者: ' + ((a.by && a.by.displayName) || '') ;
+  wrap.append(h, who);
+  const before = a.before ? summarizeDoc(a.before) : '(新規・変更前なし)';
+  const after = a.after ? summarizeDoc(a.after) : '';
+  const pre = document.createElement('pre');
+  pre.textContent = '変更前: ' + before + '\n変更後: ' + after;
+  wrap.appendChild(pre);
+  return wrap;
+}
+
+// 監査ログの変更前後を読める1行要約にする
+function summarizeDoc(d) {
+  if (!d) return '';
+  if (d.isOpen === false) return '休業(0円)';
+  const parts = [];
+  parts.push('売上' + yen(recordSalesTotal(d)) + '円');
+  if (d.payments) parts.push('現金' + yen(d.payments.cash) + '/ｷｬｯｼｭﾚｽ' + yen(d.payments.cashless));
+  const exp = (d.expenses || []).reduce((a, e) => a + (Number(e.amount) || 0), 0);
+  if (exp) parts.push('経費' + yen(exp) + '円');
+  if (d.guests != null) parts.push('客数' + d.guests);
+  if (d.memo) parts.push('メモ:' + d.memo);
+  return parts.join(' / ');
+}
+</script>
+</body>
+</html>
