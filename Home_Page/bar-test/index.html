@@ -119,6 +119,7 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
       <div class="tabs">
         <div class="tab active" id="tabInput">日次入力</div>
         <div class="tab" id="tabMonth">月次</div>
+        <div class="tab" id="tabExcel">Excel出力</div>
       </div>
       <div id="panelInput">
       <div class="wk" id="weekBar"></div>
@@ -181,6 +182,16 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
         </div>
       </div>
 
+      <div id="panelExcel" style="display:none">
+        <div class="body" style="padding-top:12px">
+          <label>出力する年月</label>
+          <input type="month" id="xlMonth">
+          <button class="btn-main" id="btnExcel">Excelをダウンロード</button>
+          <p class="note">ダッシュボード・日次明細・経費明細の3シートのExcel(.xlsx)を作成します。センターテールの確定申告資料として、税理士や会計ソフトにそのまま渡せる体裁です。</p>
+          <div class="diff" id="xlMsg"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -193,8 +204,10 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, getDocs }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import * as XLSX from 'https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs';
 import { calcSalesTotal, calcExtrasTotal, calcPaymentDiff, buildDailyDoc, toDateId, EXPENSE_CATEGORIES,
-  calcMonthlySummary, calcMonthOverMonth, findMissingBusinessDays, recordSalesTotal, daysInMonth } from './logic.js';
+  calcMonthlySummary, calcMonthOverMonth, findMissingBusinessDays, recordSalesTotal, daysInMonth,
+  excelFileName, buildDashboardMatrix, buildDailyMatrix, buildExpenseMatrix } from './logic.js';
 
 // pekin-shift のWebアプリ構成(公開情報)
 const app = initializeApp({
@@ -464,15 +477,39 @@ $('btnHoliday').onclick = () => { if (confirm($('inDate').value + ' を休業日
 // 月次画面(フェーズ3)。admin/centertail 両方が閲覧できる(編集履歴は含まない)
 // ============================================================
 function showTab(which) {
-  const isInput = (which === 'input');
-  $('panelInput').style.display = isInput ? 'block' : 'none';
-  $('panelMonth').style.display = isInput ? 'none' : 'block';
-  $('tabInput').classList.toggle('active', isInput);
-  $('tabMonth').classList.toggle('active', !isInput);
-  if (!isInput) loadMonth();
+  const panels = { input: 'panelInput', month: 'panelMonth', excel: 'panelExcel' };
+  const tabs = { input: 'tabInput', month: 'tabMonth', excel: 'tabExcel' };
+  Object.keys(panels).forEach((k) => { $(panels[k]).style.display = (k === which) ? 'block' : 'none'; });
+  Object.keys(tabs).forEach((k) => { $(tabs[k]).classList.toggle('active', k === which); });
+  if (which === 'month') loadMonth();
+  if (which === 'excel' && !$('xlMonth').value) $('xlMonth').value = toDateId(new Date()).slice(0, 7);
 }
 $('tabInput').onclick = () => showTab('input');
 $('tabMonth').onclick = () => showTab('month');
+$('tabExcel').onclick = () => showTab('excel');
+
+// Excel出力(フェーズ4): SheetJSでブラウザ内生成しダウンロード。admin/centertail両方可。
+async function generateExcel() {
+  const ym = $('xlMonth').value;
+  if (!ym) { toast('出力する年月を選んでください'); return; }
+  $('btnExcel').disabled = true; $('xlMsg').textContent = 'Excelを作成しています...';
+  try {
+    const recs = await fetchMonthRecords(ym);
+    const prev = await fetchMonthRecords(shiftMonth(ym, -1));
+    const summary = calcMonthlySummary(recs, ym, shareRatio);
+    const prevSummary = calcMonthlySummary(prev, shiftMonth(ym, -1), shareRatio);
+    const mom = calcMonthOverMonth(summary.salesTotal, prevSummary.salesTotal);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(buildDashboardMatrix(summary, mom)), 'ダッシュボード');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(buildDailyMatrix(recs, priceBands, ym)), '日次明細');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(buildExpenseMatrix(recs, ym)), '経費明細');
+    XLSX.writeFile(wb, excelFileName(ym));
+    $('xlMsg').textContent = ym + ' のExcelをダウンロードしました。';
+    toast(ym + ' のExcelを作成しました');
+  } catch (e) { $('xlMsg').textContent = ''; toast('Excel作成に失敗しました: ' + (e.code || e.message)); }
+  finally { $('btnExcel').disabled = false; }
+}
+$('btnExcel').onclick = generateExcel;
 
 function shiftMonth(ym, n) {
   const p = ym.split('-').map(Number);

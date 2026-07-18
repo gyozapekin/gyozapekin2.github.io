@@ -235,3 +235,99 @@ export function findMissingBusinessDays(ym, businessDays, records, today) {
   });
   return out;
 }
+
+// ============================================================
+// フェーズ4: Excel出力用データ生成(純粋関数のみ)
+// 対象REQ: REQ-F12(Excel出力・3シート) REQ-F15(分配を明記)
+// 方針: SheetJS等での実際のxlsx生成はUI側に置き、シートに載せる「値の組み立て」を
+//       ここで純粋関数化する。模擬データで原データとの突合テストができる。
+//       各関数は AOA(array of arrays: 先頭行がヘッダ)を返す。
+// ============================================================
+
+// 出力ファイル名(REQ-F12): BarPekin_Sales_YYYY-MM.xlsx
+export function excelFileName(ym) {
+  return 'BarPekin_Sales_' + (isYearMonth(ym) ? ym : 'unknown') + '.xlsx';
+}
+
+// ダッシュボードシート: 月次サマリーを [項目, 値] の2列で返す。
+// summary = calcMonthlySummary(...) の戻り値。mom = calcMonthOverMonth(...)(null可)。
+export function buildDashboardMatrix(summary, mom) {
+  var s = summary;
+  var pct = Math.round(s.share.pekinShare * 100);
+  var rows = [
+    ['項目', '値'],
+    ['対象月', s.ym],
+    ['売上合計(円)', s.salesTotal],
+    ['現金(円)', s.payments.cash],
+    ['キャッシュレス(円)', s.payments.cashless],
+    ['営業日数', s.openDays],
+    ['休業日数', s.closedDays],
+    ['日平均売上(円)', s.dailyAverage],
+    ['客数', s.guestsSum],
+    ['組数', s.groupsSum],
+    ['客単価(円)', s.avgPerGuest == null ? '' : s.avgPerGuest],
+    ['前月比(%)', mom == null ? '' : mom],
+    ['経費合計(円)', s.expensesTotal],
+    ['経費 仕入(円)', s.expenseByCategory['仕入'] || 0],
+    ['経費 消耗品(円)', s.expenseByCategory['消耗品'] || 0],
+    ['経費 その他(円)', s.expenseByCategory['その他'] || 0],
+    ['北京取り分(' + pct + '%)(円)', s.share.pekinAmount],
+    ['センターテール取り分(' + (100 - pct) + '%)(円)', s.share.centertailAmount],
+    ['センターテール収支(取り分-経費)(円)', s.centertailBalance]
+  ];
+  return rows;
+}
+
+// 日次明細シート: 1日1行(その月の記録がある日を日付順)。
+// 価格帯マスタ(priceBands)の順で「数量」「金額」列を並べる。金額は各レコードの
+// 保存時単価(スナップショット)で算出する。extras(その他売上)は1列にまとめる。
+export function buildDailyMatrix(records, priceBands, ym) {
+  var bands = priceBands || [];
+  var header = ['日付', '営業'];
+  bands.forEach(function (b) { header.push(b.label + ' 数量'); header.push(b.label + ' 金額'); });
+  header.push('その他売上', '売上合計', '現金', 'キャッシュレス', '客数', '組数', '天気', 'メモ', '入力者');
+
+  var recs = (records || [])
+    .filter(function (r) { return r && typeof r.date === 'string' && r.date.slice(0, 7) === ym; })
+    .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+
+  var rows = [header];
+  recs.forEach(function (r) {
+    var open = r.isOpen !== false;
+    var itemByKey = {};
+    (r.items || []).forEach(function (it) { itemByKey[it.key] = it; });
+    var row = [r.date, open ? '営業' : '休業'];
+    bands.forEach(function (b) {
+      var it = itemByKey[b.key];
+      var qty = (open && it) ? (Number(it.qty) || 0) : 0;
+      var price = it ? (Number(it.unitPrice) || 0) : (Number(b.unitPrice) || 0);
+      row.push(qty);
+      row.push(qty * price);
+    });
+    row.push(open ? calcExtrasTotal(r.extras) : 0);
+    row.push(recordSalesTotal(r));
+    row.push(open ? ((r.payments && Number(r.payments.cash)) || 0) : 0);
+    row.push(open ? ((r.payments && Number(r.payments.cashless)) || 0) : 0);
+    row.push(r.guests != null ? Number(r.guests) : '');
+    row.push(r.groups != null ? Number(r.groups) : '');
+    row.push(r.weather || '');
+    row.push(r.memo || '');
+    row.push((r.enteredBy && r.enteredBy.displayName) || '');
+    rows.push(row);
+  });
+  return rows;
+}
+
+// 経費明細シート: 1行1件(日付順)。センターテールの経費帳として使える体裁。
+export function buildExpenseMatrix(records, ym) {
+  var recs = (records || [])
+    .filter(function (r) { return r && typeof r.date === 'string' && r.date.slice(0, 7) === ym; })
+    .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  var rows = [['日付', '内容', '区分', '金額(円)']];
+  recs.forEach(function (r) {
+    (r.expenses || []).forEach(function (e) {
+      rows.push([r.date, e.label || '', e.category || '', Number(e.amount) || 0]);
+    });
+  });
+  return rows;
+}
