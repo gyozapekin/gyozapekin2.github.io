@@ -99,6 +99,7 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
 .pband{display:flex;gap:6px;align-items:center;margin-top:6px}
 .pband input.pl{flex:2}
 .pband input.pp{flex:1}
+.pband .del{background:#e2e8f0;color:#475569;flex:none;width:40px;height:40px;border-radius:8px}
 </style>
 </head>
 <body>
@@ -205,7 +206,8 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
           <div class="sdays" id="sDays"></div>
           <label style="margin-top:14px">価格帯(名前と値段)</label>
           <div id="sBands"></div>
-          <p class="note">値段や名前を変えても、これまでに保存した日の金額は変わりません(その日の値段で記録済みです)。変更は、次に入力する日から反映されます。</p>
+          <button class="btn-sub" id="btnAddBand" style="margin-top:8px">価格帯を追加</button>
+          <p class="note">価格帯は行を追加・削除できます(例: 300円の枠を足す)。値段や名前を変えても、これまでに保存した日の金額は変わりません(その日の値段で記録済みです)。変更は、次に入力する日から反映されます。</p>
           <button class="btn-main" id="btnSaveSettings">設定を保存する</button>
           <div class="diff" id="setMsg"></div>
         </div>
@@ -529,25 +531,40 @@ function renderSettings() {
   const bb = $('sBands'); bb.innerHTML = '';
   priceBands.forEach((b, i) => {
     const row = document.createElement('div'); row.className = 'pband';
-    const l = document.createElement('input'); l.className = 'pl'; l.value = b.label || '';
+    const l = document.createElement('input'); l.className = 'pl'; l.placeholder = '内容(例: ソフトドリンク)'; l.value = b.label || '';
     l.oninput = () => { priceBands[i].label = l.value; };
-    const p = document.createElement('input'); p.className = 'pp'; p.type = 'number'; p.inputMode = 'numeric'; p.min = '0'; p.value = b.unitPrice;
+    const p = document.createElement('input'); p.className = 'pp'; p.type = 'number'; p.inputMode = 'numeric'; p.min = '0'; p.placeholder = '値段'; p.value = b.unitPrice;
     p.oninput = () => { priceBands[i].unitPrice = Number(p.value) || 0; };
-    row.append(l, p); bb.appendChild(row);
+    const del = document.createElement('button'); del.className = 'del'; del.textContent = 'x';
+    del.onclick = () => { priceBands.splice(i, 1); renderSettings(); };
+    row.append(l, p, del); bb.appendChild(row);
   });
 }
+// 新しい価格帯の一意なキーを作る(過去レコードの単価スナップショットと衝突しない)
+function newBandKey() { return 'band_' + Date.now().toString(36) + Math.floor(Math.random() * 1000); }
+$('btnAddBand').onclick = () => { priceBands.push({ key: newBandKey(), label: '', unitPrice: 0 }); renderSettings(); };
+
 async function saveSettings() {
   if (businessDays.length === 0) { toast('営業する曜日を1つ以上選んでください'); return; }
+  // 完全に空の行(名前なし・値段0)は捨てる
+  const bands = priceBands.filter((b) => !((b.label || '').trim() === '' && (Number(b.unitPrice) || 0) === 0));
+  if (bands.length === 0) { toast('価格帯を1つ以上入れてください'); return; }
+  const bad = bands.find((b) => (b.label || '').trim() === '' || (Number(b.unitPrice) || 0) <= 0);
+  if (bad) { toast('価格帯は名前と1円以上の値段を入れてください'); return; }
+  // キーの無い行(追加分)に一意キーを付与し、整形
+  const cleaned = bands.map((b) => ({ key: b.key || newBandKey(), label: b.label.trim(), unitPrice: Number(b.unitPrice) || 0 }));
   $('btnSaveSettings').disabled = true; $('setMsg').textContent = '保存しています...';
   try {
     await updateDoc(doc(db, 'bar_pekin_config', 'config'), {
       businessDays: businessDays.slice().sort((a, b) => a - b),
-      priceBands: priceBands,
+      priceBands: cleaned,
       updatedAt: new Date().toISOString()
     });
+    priceBands = cleaned; // メモリも整形後で更新
     $('setMsg').textContent = '設定を保存しました。';
     toast('設定を保存しました');
-    renderBands(); // 入力画面の単価に即反映
+    renderSettings();
+    renderBands(); // 入力画面の価格帯に即反映
   } catch (e) { $('setMsg').textContent = ''; toast('保存に失敗しました: ' + (e.code || e.message)); }
   finally { $('btnSaveSettings').disabled = false; }
 }
