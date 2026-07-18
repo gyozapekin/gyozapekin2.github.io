@@ -93,6 +93,12 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
 .sumtbl td.sub{color:#94a3b8;font-weight:600;padding-left:14px}
 .sumtbl td.v{text-align:right;font-weight:700;color:#1a202c}
 .sumtbl tr.hl td{background:#faf6f0}
+.sdays{display:flex;gap:4px;margin-top:6px}
+.sday{flex:1;text-align:center;padding:10px 2px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:.9em;font-weight:700;color:#475569;background:#fff}
+.sday.sel{background:var(--red2);color:#fff;border-color:var(--red2)}
+.pband{display:flex;gap:6px;align-items:center;margin-top:6px}
+.pband input.pl{flex:2}
+.pband input.pp{flex:1}
 </style>
 </head>
 <body>
@@ -120,6 +126,7 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
         <div class="tab active" id="tabInput">日次入力</div>
         <div class="tab" id="tabMonth">月次</div>
         <div class="tab" id="tabExcel">Excel出力</div>
+        <div class="tab" id="tabSettings">設定</div>
       </div>
       <div id="panelInput">
       <div class="wk" id="weekBar"></div>
@@ -192,6 +199,18 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
         </div>
       </div>
 
+      <div id="panelSettings" style="display:none">
+        <div class="body" style="padding-top:12px">
+          <label>営業する曜日</label>
+          <div class="sdays" id="sDays"></div>
+          <label style="margin-top:14px">価格帯(名前と値段)</label>
+          <div id="sBands"></div>
+          <p class="note">値段や名前を変えても、これまでに保存した日の金額は変わりません(その日の値段で記録済みです)。変更は、次に入力する日から反映されます。</p>
+          <button class="btn-main" id="btnSaveSettings">設定を保存する</button>
+          <div class="diff" id="setMsg"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -202,7 +221,7 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, getDocs }
+import { getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection, query, where, getDocs }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import * as XLSX from 'https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs';
 import { calcSalesTotal, calcExtrasTotal, calcPaymentDiff, buildDailyDoc, toDateId, EXPENSE_CATEGORIES,
@@ -477,16 +496,62 @@ $('btnHoliday').onclick = () => { if (confirm($('inDate').value + ' を休業日
 // 月次画面(フェーズ3)。admin/centertail 両方が閲覧できる(編集履歴は含まない)
 // ============================================================
 function showTab(which) {
-  const panels = { input: 'panelInput', month: 'panelMonth', excel: 'panelExcel' };
-  const tabs = { input: 'tabInput', month: 'tabMonth', excel: 'tabExcel' };
+  const panels = { input: 'panelInput', month: 'panelMonth', excel: 'panelExcel', settings: 'panelSettings' };
+  const tabs = { input: 'tabInput', month: 'tabMonth', excel: 'tabExcel', settings: 'tabSettings' };
   Object.keys(panels).forEach((k) => { $(panels[k]).style.display = (k === which) ? 'block' : 'none'; });
   Object.keys(tabs).forEach((k) => { $(tabs[k]).classList.toggle('active', k === which); });
   if (which === 'month') loadMonth();
   if (which === 'excel' && !$('xlMonth').value) $('xlMonth').value = toDateId(new Date()).slice(0, 7);
+  if (which === 'settings') renderSettings();
 }
 $('tabInput').onclick = () => showTab('input');
 $('tabMonth').onclick = () => showTab('month');
 $('tabExcel').onclick = () => showTab('excel');
+$('tabSettings').onclick = () => showTab('settings');
+
+// 設定タブ: 営業曜日と価格帯(名前・値段)をセンターテールも変更できる。
+// 分配比率などは変更させない(それは社長の管理画面のみ・ルールでも制限)。
+function renderSettings() {
+  const box = $('sDays'); box.innerHTML = '';
+  const youbi = ['日', '月', '火', '水', '木', '金', '土'];
+  youbi.forEach((w, i) => {
+    const c = document.createElement('div');
+    c.className = 'sday' + (businessDays.indexOf(i) >= 0 ? ' sel' : '');
+    c.textContent = w;
+    c.onclick = () => {
+      const k = businessDays.indexOf(i);
+      if (k >= 0) businessDays.splice(k, 1); else businessDays.push(i);
+      businessDays.sort((a, b) => a - b);
+      c.classList.toggle('sel');
+    };
+    box.appendChild(c);
+  });
+  const bb = $('sBands'); bb.innerHTML = '';
+  priceBands.forEach((b, i) => {
+    const row = document.createElement('div'); row.className = 'pband';
+    const l = document.createElement('input'); l.className = 'pl'; l.value = b.label || '';
+    l.oninput = () => { priceBands[i].label = l.value; };
+    const p = document.createElement('input'); p.className = 'pp'; p.type = 'number'; p.inputMode = 'numeric'; p.min = '0'; p.value = b.unitPrice;
+    p.oninput = () => { priceBands[i].unitPrice = Number(p.value) || 0; };
+    row.append(l, p); bb.appendChild(row);
+  });
+}
+async function saveSettings() {
+  if (businessDays.length === 0) { toast('営業する曜日を1つ以上選んでください'); return; }
+  $('btnSaveSettings').disabled = true; $('setMsg').textContent = '保存しています...';
+  try {
+    await updateDoc(doc(db, 'bar_pekin_config', 'config'), {
+      businessDays: businessDays.slice().sort((a, b) => a - b),
+      priceBands: priceBands,
+      updatedAt: new Date().toISOString()
+    });
+    $('setMsg').textContent = '設定を保存しました。';
+    toast('設定を保存しました');
+    renderBands(); // 入力画面の単価に即反映
+  } catch (e) { $('setMsg').textContent = ''; toast('保存に失敗しました: ' + (e.code || e.message)); }
+  finally { $('btnSaveSettings').disabled = false; }
+}
+$('btnSaveSettings').onclick = saveSettings;
 
 // Excel出力(フェーズ4): SheetJSでブラウザ内生成しダウンロード。admin/centertail両方可。
 async function generateExcel() {
