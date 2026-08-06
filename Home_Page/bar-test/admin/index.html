@@ -73,6 +73,7 @@ a.back{font-size:.72em;color:#a93226;font-weight:700;text-decoration:none}
       <input type="email" id="inEmail" autocomplete="username" inputmode="email">
       <label>パスワード</label>
       <input type="password" id="inPw" autocomplete="current-password">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:400;font-size:.85em;color:#475569;margin-top:8px;cursor:pointer"><input type="checkbox" id="pwShow" style="width:auto;margin:0">パスワードを表示する</label>
       <button class="btn-main" id="btnLogin">ログイン</button>
       <p class="note">この画面は管理者(admin)専用です。日次入力は <a class="back" href="../">売上入力画面</a> から。</p>
     </div>
@@ -183,6 +184,14 @@ let dMonth = null; // データ閲覧の月
 
 function toast(t) { const m = $('msg'); m.textContent = t; m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2800); }
 function yen(n) { return (Number(n) || 0).toLocaleString(); }
+let discordWebhook = '';
+// Discord通知(bar-売上チャンネル)。失敗しても業務は止めない
+function notifyDiscord(text) {
+  if (!discordWebhook) return;
+  try {
+    fetch(discordWebhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: text }) }).catch(() => {});
+  } catch (e) { }
+}
 
 // ---- ログイン ----
 $('btnLogin').onclick = async () => {
@@ -193,6 +202,8 @@ $('btnLogin').onclick = async () => {
   } catch (e) { $('loginErr').style.display = 'block'; }
 };
 $('btnLogout').onclick = () => signOut(auth);
+// パスワードの表示切替(入力ミス防止)
+$('pwShow').onchange = () => { $('inPw').type = $('pwShow').checked ? 'text' : 'password'; };
 
 onAuthStateChanged(auth, async (u) => {
   if (!u || u.isAnonymous) { me = null; $('viewMain').style.display = 'none'; $('viewLogin').style.display = 'block'; return; }
@@ -268,6 +279,7 @@ async function toggleUser(u, toActive) {
       role: u.role, displayName: u.displayName || '', active: toActive
     });
     toast(u.displayName + ' を' + verb + 'しました');
+    notifyDiscord('Bar売上管理(管理画面): アカウント「' + (u.displayName || '') + '」を' + verb + 'しました。');
     await loadUsers();
   } catch (e) { toast(verb + 'に失敗: ' + (e.code || e.message)); }
 }
@@ -292,6 +304,7 @@ $('btnAddStaff').onclick = async () => {
       createdAt: new Date().toISOString(), createdBy: me.uid
     });
     toast(name + ' を追加しました');
+    notifyDiscord('Bar売上管理(管理画面): センターテール「' + name + '」を追加しました。');
     $('newName').value = ''; $('newEmail').value = ''; $('newPw').value = '';
     await loadUsers();
   } catch (e) {
@@ -318,6 +331,7 @@ async function loadConfig() {
       priceBands: d.priceBands || [],
       shareRatio: d.shareRatio || []
     };
+    discordWebhook = d.discordWebhook || '';
   }
   renderWdays();
   renderBandEdit();
@@ -392,10 +406,13 @@ $('btnSaveConfig').onclick = async () => {
       businessDays: config.businessDays.slice().sort((a, b) => a - b),
       priceBands: cleaned,
       shareRatio: config.shareRatio,
+      discordWebhook: discordWebhook, // 通知先は保持(消さない)
       updatedAt: new Date().toISOString()
     });
     config.priceBands = cleaned; renderBandEdit();
     toast('設定を保存しました');
+    const youbi = ['日', '月', '火', '水', '木', '金', '土'];
+    notifyDiscord('Bar売上管理(管理画面): 設定を変更。営業曜日[' + config.businessDays.map((d) => youbi[d]).join('') + '] 価格帯' + cleaned.length + '件 分配比率履歴' + config.shareRatio.length + '件 変更者: ' + (me.displayName || '管理者'));
   } catch (e) { toast('保存に失敗: ' + (e.code || e.message)); }
 };
 
