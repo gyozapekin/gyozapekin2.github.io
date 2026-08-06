@@ -113,6 +113,7 @@ button{border:none;border-radius:10px;font-weight:700;cursor:pointer}
       <input type="email" id="inEmail" autocomplete="username" inputmode="email">
       <label>パスワード</label>
       <input type="password" id="inPw" autocomplete="current-password">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:400;font-size:.85em;color:#475569;margin-top:8px;cursor:pointer"><input type="checkbox" id="pwShow" style="width:auto;margin:0">パスワードを表示する</label>
       <button class="btn-main" id="btnLogin">ログイン</button>
     </div>
   </div>
@@ -245,6 +246,7 @@ let me = null;            // {uid, displayName, role}
 let priceBands = [];      // configの価格帯マスタ
 let businessDays = [0, 1, 2, 3]; // 営業予定曜日(打ち忘れ検知用)
 let shareRatio = [];      // 分配比率履歴 [{effectiveFrom, pekinShare}]
+let discordWebhook = '';  // 保存・変更のDiscord通知先(configから取得。無ければ通知しない)
 let currentMonth = null;  // 月次画面の表示中の月 'YYYY-MM'
 let qty = {};             // key -> 数量
 let weather = '';         // 晴/曇/雨 or ''
@@ -253,6 +255,18 @@ let existingDoc = null;   // 上書き時の変更前スナップショット(�
 let saving = false;
 
 function toast(t) { const m = $('msg'); m.textContent = t; m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2600); }
+
+// Discord通知(bar-売上チャンネル)。失敗しても業務は止めない(投げっぱなし)
+function notifyDiscord(text) {
+  if (!discordWebhook) return;
+  try {
+    fetch(discordWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: text })
+    }).catch(() => {});
+  } catch (e) { /* 通知失敗は無視 */ }
+}
 
 // ログイン
 $('btnLogin').onclick = async () => {
@@ -263,6 +277,8 @@ $('btnLogin').onclick = async () => {
   } catch (e) { $('loginErr').style.display = 'block'; }
 };
 $('btnLogout').onclick = () => signOut(auth);
+// パスワードの表示切替(入力ミス防止)
+$('pwShow').onchange = () => { $('inPw').type = $('pwShow').checked ? 'text' : 'password'; };
 
 onAuthStateChanged(auth, async (u) => {
   // 匿名セッション(シフト管理側が同一ドメインで使用)はバーでは無視する。サインアウトもしない
@@ -277,6 +293,7 @@ onAuthStateChanged(auth, async (u) => {
     priceBands = (cfgSnap.exists() && cfgSnap.data().priceBands) || [];
     businessDays = (cfgSnap.exists() && cfgSnap.data().businessDays) || [0, 1, 2, 3];
     shareRatio = (cfgSnap.exists() && cfgSnap.data().shareRatio) || [];
+    discordWebhook = (cfgSnap.exists() && cfgSnap.data().discordWebhook) || '';
     $('whoami').textContent = me.displayName + ' でログイン中';
     $('adminLink').style.display = (me.role === 'admin') ? 'inline-block' : 'none';
     showTab('input');
@@ -476,6 +493,13 @@ async function save(isOpen) {
         at: docData.updatedAt
       });
     } catch (e2) { /* 監査追記失敗は握りつぶさない方針だが入力は止めない */ console.warn('audit', e2); }
+    // Discordへ入力・変更を通知
+    const act = existingDoc ? '上書き' : (isOpen ? '新規保存' : '休業登録');
+    if (isOpen) {
+      notifyDiscord('Bar売上管理: ' + id + ' を' + act + '。売上合計 ' + docData.salesTotal.toLocaleString() + '円(現金' + docData.payments.cash.toLocaleString() + '/キャッシュレス' + docData.payments.cashless.toLocaleString() + ')' + (docData.guests != null ? ' 客数' + docData.guests : '') + ' 入力者: ' + (me.displayName || ''));
+    } else {
+      notifyDiscord('Bar売上管理: ' + id + ' を休業として登録。入力者: ' + (me.displayName || ''));
+    }
     existingDoc = docData;
     existingCreatedAt = docData.createdAt;
     if (!isOpen) {
@@ -563,6 +587,8 @@ async function saveSettings() {
     priceBands = cleaned; // メモリも整形後で更新
     $('setMsg').textContent = '設定を保存しました。';
     toast('設定を保存しました');
+    const youbi = ['日', '月', '火', '水', '木', '金', '土'];
+    notifyDiscord('Bar売上管理: 設定を変更。営業曜日[' + businessDays.map((d) => youbi[d]).join('') + '] 価格帯' + cleaned.length + '件(' + cleaned.map((b) => b.label + b.unitPrice + '円').join(' / ') + ') 変更者: ' + (me.displayName || ''));
     renderSettings();
     renderBands(); // 入力画面の価格帯に即反映
   } catch (e) { $('setMsg').textContent = ''; toast('保存に失敗しました: ' + (e.code || e.message)); }
